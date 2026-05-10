@@ -1,6 +1,6 @@
-# MemCard ChatGPT App
+# Streamboard ChatGPT App
 
-This directory contains the configuration for publishing MemCard as a ChatGPT App via the OpenAI Apps SDK.
+This directory contains the configuration for publishing Streamboard as a ChatGPT App via the OpenAI Apps SDK.
 
 ## Architecture
 
@@ -28,14 +28,14 @@ Tools that have widgets use `registerAppTool` from `@modelcontextprotocol/ext-ap
 ### Prerequisites
 
 - OpenAI organization with Admin/Owner access
-- MCP server deployed and reachable at `https://mcp.memcard.dev/mcp`
+- MCP server deployed and reachable at `https://mcp.usestreamboard.com/mcp`
 - Privacy policy and terms of service URLs live
 
 ### Steps
 
 1. Go to **Workplace Settings > Apps** in ChatGPT
 2. Click **Create App**
-3. Enter the MCP server URL: `https://mcp.memcard.dev/mcp`
+3. Enter the MCP server URL: `https://mcp.usestreamboard.com/mcp`
 4. Fill in metadata from `app-manifest.json`
 5. Test all tools and widgets in draft mode
 6. Click **Publish** from the **Drafts** tab
