@@ -5,7 +5,7 @@ const FEEDBACK_PROMPT =
   "If the user learned any new concepts, patterns, gotchas, or insights during this conversation that are worth retaining, suggest 1-3 concise flashcards and ask the user if they would like to save them to Memcard. Keep fronts as clear questions, backs concise with code blocks where relevant. Tag with the relevant technology. If nothing worth carding, say nothing."
 
 function getCounterPath(): string {
-  return process.env.MEMCARD_COUNTER_FILE ?? "/tmp/.memcard-stop-count"
+  return process.env.STREAMBOARD_COUNTER_FILE ?? "/tmp/.streamboard-stop-count"
 }
 
 export async function runCapture(every: number): Promise<void> {

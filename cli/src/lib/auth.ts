@@ -8,7 +8,7 @@ import { outputError } from "./output"
 export function requireClient(): MemcardClient {
   const auth = resolveAuth()
   if (!auth) {
-    outputError("Not logged in. Run: memcard login", {
+    outputError("Not logged in. Run: streamboard login", {
       code: "NOT_AUTHENTICATED",
     })
   }
@@ -22,7 +22,7 @@ export async function rpc<T>(fn: () => Promise<T>): Promise<T> {
   } catch (err) {
     if (err instanceof ORPCError) {
       if (err.code === "UNAUTHORIZED") {
-        outputError("Session expired. Run: memcard login", {
+        outputError("Session expired. Run: streamboard login", {
           code: "SESSION_EXPIRED",
         })
       }

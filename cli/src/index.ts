@@ -12,9 +12,10 @@ import { skillCommand } from "./commands/skill"
 
 const main = defineCommand({
   meta: {
-    name: "memcard",
+    name: "streamboard",
     version: __CLI_VERSION__,
-    description: "Agent-optimized CLI for memcard spaced-repetition flashcards",
+    description:
+      "Agent-optimized CLI for streamboard spaced-repetition flashcards",
   },
   subCommands: {
     login: loginCommand,

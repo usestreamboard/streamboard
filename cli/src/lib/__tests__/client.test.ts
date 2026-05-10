@@ -27,7 +27,7 @@ describe("rpc error handler", () => {
 
     expect(mockStderr).toHaveBeenNthCalledWith(
       1,
-      '{"error":"Session expired. Run: memcard login","code":"SESSION_EXPIRED"}',
+      '{"error":"Session expired. Run: streamboard login","code":"SESSION_EXPIRED"}',
     )
     expect(mockExit).toHaveBeenCalledWith(1)
   })

@@ -32,7 +32,7 @@ function resolveSkillsDir(): string {
 function copySkillFiles(srcDir: string, destDir: string): string[] | null {
   if (!existsSync(srcDir)) {
     outputError(
-      `Skills directory not found: ${srcDir}. Try reinstalling the memcard package.`,
+      `Skills directory not found: ${srcDir}. Try reinstalling the streamboard package.`,
     )
     return null
   }
@@ -62,7 +62,7 @@ const installCommand = defineCommand({
   meta: {
     name: "install",
     description:
-      "Install memcard skills to .agents/skills/ (agentskills.io convention)",
+      "Install streamboard skills to .agents/skills/ (agentskills.io convention)",
   },
   args: {
     dir: {
@@ -71,7 +71,7 @@ const installCommand = defineCommand({
     },
     global: {
       type: "boolean",
-      description: "Install to ~/.agents/skills/memcard/ (user-level)",
+      description: "Install to ~/.agents/skills/streamboard/ (user-level)",
       default: false,
     },
     pretty: {
@@ -85,9 +85,9 @@ const installCommand = defineCommand({
     if (args.dir) {
       targetDir = resolve(args.dir)
     } else if (args.global) {
-      targetDir = resolve(homedir(), ".agents", "skills", "memcard")
+      targetDir = resolve(homedir(), ".agents", "skills", "streamboard")
     } else {
-      targetDir = resolve(process.cwd(), ".agents", "skills", "memcard")
+      targetDir = resolve(process.cwd(), ".agents", "skills", "streamboard")
     }
 
     const srcDir = resolveSkillsDir()
@@ -104,7 +104,7 @@ const installCommand = defineCommand({
 export const skillCommand = defineCommand({
   meta: {
     name: "skill",
-    description: "Manage memcard agent skills (agentskills.io)",
+    description: "Manage streamboard agent skills (agentskills.io)",
   },
   subCommands: {
     install: installCommand,

@@ -13,11 +13,11 @@ export interface CliConfig {
   token: string
 }
 
-export const DEFAULT_API_URL = "https://memcard.dev"
+export const DEFAULT_API_URL = "https://usestreamboard.com"
 
 function getConfigDir(): string {
   const xdg = process.env.XDG_CONFIG_HOME
-  return join(xdg || join(homedir(), ".config"), "memcard")
+  return join(xdg || join(homedir(), ".config"), "streamboard")
 }
 
 function getConfigPath(): string {
@@ -50,11 +50,11 @@ export function deleteConfig(): void {
 
 /**
  * Resolves the API URL and auth token from env vars or config file.
- * Env vars take precedence: MEMCARD_TOKEN, MEMCARD_API_URL.
+ * Env vars take precedence: STREAMBOARD_TOKEN, STREAMBOARD_API_URL.
  */
 export function resolveAuth(): { apiUrl: string; token: string } | null {
-  const envToken = process.env.MEMCARD_TOKEN
-  const envUrl = process.env.MEMCARD_API_URL
+  const envToken = process.env.STREAMBOARD_TOKEN
+  const envUrl = process.env.STREAMBOARD_API_URL
 
   if (envToken) {
     return { apiUrl: envUrl || DEFAULT_API_URL, token: envToken }

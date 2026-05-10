@@ -7,7 +7,7 @@ import { deleteConfig, loadConfig, resolveAuth, saveConfig } from "../config"
 let tempDir: string
 
 beforeEach(() => {
-  tempDir = join(tmpdir(), `memcard-test-${crypto.randomUUID()}`)
+  tempDir = join(tmpdir(), `streamboard-test-${crypto.randomUUID()}`)
   mkdirSync(tempDir, { recursive: true })
   vi.stubEnv("XDG_CONFIG_HOME", tempDir)
   vi.unstubAllEnvs
@@ -24,7 +24,7 @@ describe("loadConfig", () => {
   })
 
   test("loads a valid config file", () => {
-    const configDir = join(tempDir, "memcard")
+    const configDir = join(tempDir, "streamboard")
     mkdirSync(configDir, { recursive: true })
     writeFileSync(
       join(configDir, "config.json"),
@@ -41,7 +41,7 @@ describe("loadConfig", () => {
   })
 
   test("returns null for invalid JSON", () => {
-    const configDir = join(tempDir, "memcard")
+    const configDir = join(tempDir, "streamboard")
     mkdirSync(configDir, { recursive: true })
     writeFileSync(join(configDir, "config.json"), "not json")
     expect(loadConfig()).toBeNull()
@@ -51,12 +51,12 @@ describe("loadConfig", () => {
 describe("saveConfig", () => {
   test("creates config dir and writes file", () => {
     saveConfig({
-      apiUrl: "https://memcard.dev",
+      apiUrl: "https://usestreamboard.com",
       token: "tok123",
     })
     const config = loadConfig()
     expect(config).toEqual({
-      apiUrl: "https://memcard.dev",
+      apiUrl: "https://usestreamboard.com",
       token: "tok123",
     })
   })
@@ -65,7 +65,7 @@ describe("saveConfig", () => {
 describe("deleteConfig", () => {
   test("deletes existing config file", () => {
     saveConfig({
-      apiUrl: "https://memcard.dev",
+      apiUrl: "https://usestreamboard.com",
       token: "tok",
     })
     expect(loadConfig()).not.toBeNull()
@@ -83,20 +83,23 @@ describe("resolveAuth", () => {
     expect(resolveAuth()).toBeNull()
   })
 
-  test("prefers MEMCARD_TOKEN env var over config file", () => {
+  test("prefers STREAMBOARD_TOKEN env var over config file", () => {
     saveConfig({
       apiUrl: "https://from-config.dev",
       token: "config-token",
     })
-    vi.stubEnv("MEMCARD_TOKEN", "env-token")
+    vi.stubEnv("STREAMBOARD_TOKEN", "env-token")
 
     const auth = resolveAuth()
-    expect(auth).toEqual({ apiUrl: "https://memcard.dev", token: "env-token" })
+    expect(auth).toEqual({
+      apiUrl: "https://usestreamboard.com",
+      token: "env-token",
+    })
   })
 
-  test("uses MEMCARD_API_URL with env token", () => {
-    vi.stubEnv("MEMCARD_TOKEN", "env-token")
-    vi.stubEnv("MEMCARD_API_URL", "https://custom.dev")
+  test("uses STREAMBOARD_API_URL with env token", () => {
+    vi.stubEnv("STREAMBOARD_TOKEN", "env-token")
+    vi.stubEnv("STREAMBOARD_API_URL", "https://custom.dev")
 
     const auth = resolveAuth()
     expect(auth).toEqual({ apiUrl: "https://custom.dev", token: "env-token" })
@@ -112,12 +115,12 @@ describe("resolveAuth", () => {
     expect(auth).toEqual({ apiUrl: "https://saved.dev", token: "saved-token" })
   })
 
-  test("MEMCARD_API_URL overrides config apiUrl", () => {
+  test("STREAMBOARD_API_URL overrides config apiUrl", () => {
     saveConfig({
       apiUrl: "https://saved.dev",
       token: "saved-token",
     })
-    vi.stubEnv("MEMCARD_API_URL", "https://override.dev")
+    vi.stubEnv("STREAMBOARD_API_URL", "https://override.dev")
 
     const auth = resolveAuth()
     expect(auth).toEqual({

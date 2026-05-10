@@ -2,7 +2,7 @@ import { defineCommand } from "citty"
 import { DEFAULT_API_URL, resolveAuth, saveConfig } from "../lib/config"
 import { output, outputError } from "../lib/output"
 
-const CLIENT_ID = "memcard-cli"
+const CLIENT_ID = "streamboard-cli"
 const GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code" as const
 
 interface DeviceCodeResponse {
@@ -137,7 +137,7 @@ const statusCommand = defineCommand({
     output({
       authenticated: !!auth,
       api_url: auth?.apiUrl ?? null,
-      source: process.env.MEMCARD_TOKEN ? "env" : auth ? "config" : null,
+      source: process.env.STREAMBOARD_TOKEN ? "env" : auth ? "config" : null,
     })
   },
 })

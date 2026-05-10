@@ -78,7 +78,7 @@ describe("skill install", () => {
     const logged = JSON.parse(logSpy.mock.calls[0][0] as string)
     expect(logged.created).toEqual(["create-deck/SKILL.md", "review/SKILL.md"])
     expect(logged.directory).toBe(
-      resolve(process.cwd(), ".agents", "skills", "memcard"),
+      resolve(process.cwd(), ".agents", "skills", "streamboard"),
     )
   })
 
@@ -89,7 +89,7 @@ describe("skill install", () => {
 
     const logged = JSON.parse(logSpy.mock.calls[0][0] as string)
     expect(logged.directory).toBe(
-      resolve(homedir(), ".agents", "skills", "memcard"),
+      resolve(homedir(), ".agents", "skills", "streamboard"),
     )
   })
 

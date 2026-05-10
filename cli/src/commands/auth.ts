@@ -7,7 +7,7 @@ import {
 } from "../lib/config"
 import { output, outputError } from "../lib/output"
 
-const CLIENT_ID = "memcard-cli"
+const CLIENT_ID = "streamboard-cli"
 const GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code" as const
 
 interface DeviceCodeResponse {
@@ -38,7 +38,7 @@ function sleep(ms: number): Promise<void> {
 export const loginCommand = defineCommand({
   meta: {
     name: "login",
-    description: "Authenticate with memcard via device flow",
+    description: "Authenticate with streamboard via device flow",
   },
   args: {
     "api-url": {
@@ -169,7 +169,7 @@ export const whoamiCommand = defineCommand({
   async run({ args }) {
     const auth = resolveAuth()
     if (!auth)
-      return outputError("Not logged in. Run: memcard login", {
+      return outputError("Not logged in. Run: streamboard login", {
         code: "NOT_AUTHENTICATED",
       })
 
@@ -178,7 +178,7 @@ export const whoamiCommand = defineCommand({
     })
 
     if (!res.ok)
-      return outputError("Session expired. Run: memcard login", {
+      return outputError("Session expired. Run: streamboard login", {
         code: "SESSION_EXPIRED",
       })
 

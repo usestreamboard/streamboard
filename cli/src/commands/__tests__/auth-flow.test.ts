@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 vi.mock("../../lib/config", () => ({
-  DEFAULT_API_URL: "https://memcard.dev",
+  DEFAULT_API_URL: "https://usestreamboard.com",
   saveConfig: vi.fn(),
   resolveAuth: vi.fn(),
 }))
@@ -38,8 +38,9 @@ describe("auth request", () => {
   const deviceCodeResponse = {
     device_code: "dev_abc123",
     user_code: "ABCD-1234",
-    verification_uri: "https://memcard.dev/device",
-    verification_uri_complete: "https://memcard.dev/device?code=ABCD-1234",
+    verification_uri: "https://usestreamboard.com/device",
+    verification_uri_complete:
+      "https://usestreamboard.com/device?code=ABCD-1234",
     expires_in: 900,
     interval: 5,
   }
@@ -53,16 +54,16 @@ describe("auth request", () => {
     await runCommand(["request"])
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://memcard.dev/api/auth/device/code",
+      "https://usestreamboard.com/api/auth/device/code",
       expect.objectContaining({ method: "POST" }),
     )
     const logged = JSON.parse(logSpy.mock.calls[0][0] as string)
     expect(logged.device_code).toBe("dev_abc123")
     expect(logged.user_code).toBe("ABCD-1234")
     expect(logged.verification_uri_complete).toBe(
-      "https://memcard.dev/device?code=ABCD-1234",
+      "https://usestreamboard.com/device?code=ABCD-1234",
     )
-    expect(logged.api_url).toBe("https://memcard.dev")
+    expect(logged.api_url).toBe("https://usestreamboard.com")
   })
 
   test("outputs error when API fails", async () => {
@@ -110,11 +111,11 @@ describe("auth poll", () => {
     await runCommand(["poll", "dev_abc123"])
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://memcard.dev/api/auth/device/token",
+      "https://usestreamboard.com/api/auth/device/token",
       expect.objectContaining({ method: "POST" }),
     )
     expect(saveConfig).toHaveBeenCalledWith({
-      apiUrl: "https://memcard.dev",
+      apiUrl: "https://usestreamboard.com",
       token: "tok_xyz",
     })
     const logged = JSON.parse(logSpy.mock.calls[0][0] as string)
@@ -223,7 +224,7 @@ describe("auth status", () => {
 
   test("returns authenticated true with config source", async () => {
     vi.mocked(resolveAuth).mockReturnValue({
-      apiUrl: "https://memcard.dev",
+      apiUrl: "https://usestreamboard.com",
       token: "tok_abc",
     })
 
@@ -231,14 +232,14 @@ describe("auth status", () => {
 
     const logged = JSON.parse(logSpy.mock.calls[0][0] as string)
     expect(logged.authenticated).toBe(true)
-    expect(logged.api_url).toBe("https://memcard.dev")
+    expect(logged.api_url).toBe("https://usestreamboard.com")
     expect(logged.source).toBe("config")
   })
 
-  test("returns env source when MEMCARD_TOKEN is set", async () => {
-    process.env.MEMCARD_TOKEN = "tok_env"
+  test("returns env source when STREAMBOARD_TOKEN is set", async () => {
+    process.env.STREAMBOARD_TOKEN = "tok_env"
     vi.mocked(resolveAuth).mockReturnValue({
-      apiUrl: "https://memcard.dev",
+      apiUrl: "https://usestreamboard.com",
       token: "tok_env",
     })
 
@@ -248,6 +249,6 @@ describe("auth status", () => {
     expect(logged.authenticated).toBe(true)
     expect(logged.source).toBe("env")
 
-    delete process.env.MEMCARD_TOKEN
+    delete process.env.STREAMBOARD_TOKEN
   })
 })

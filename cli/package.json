@@ -1,11 +1,11 @@
 {
-  "name": "memcard",
+  "name": "streamboard",
   "version": "0.0.3",
-  "description": "Agent-optimized CLI for memcard spaced-repetition flashcards",
+  "description": "Agent-optimized CLI for streamboard spaced-repetition flashcards",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "memcard": "./dist/index.js"
+    "streamboard": "./dist/index.js"
   },
   "files": [
     "dist",

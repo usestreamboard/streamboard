@@ -4,10 +4,10 @@ import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { runCapture } from "./capture"
 
-const counterFile = join(tmpdir(), `.memcard-test-counter-${process.pid}`)
+const counterFile = join(tmpdir(), `.streamboard-test-counter-${process.pid}`)
 
 beforeEach(() => {
-  process.env.MEMCARD_COUNTER_FILE = counterFile
+  process.env.STREAMBOARD_COUNTER_FILE = counterFile
   try {
     unlinkSync(counterFile)
   } catch {
@@ -16,7 +16,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  delete process.env.MEMCARD_COUNTER_FILE
+  delete process.env.STREAMBOARD_COUNTER_FILE
   try {
     unlinkSync(counterFile)
   } catch {
