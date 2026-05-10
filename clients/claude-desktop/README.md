@@ -1,12 +1,12 @@
-# MemCard for Claude Desktop
+# Streamboard for Claude Desktop
 
-Connect MemCard's spaced-repetition flashcard tools to Claude Desktop as a remote MCP connector.
+Connect Streamboard's spaced-repetition flashcard tools to Claude Desktop as a remote MCP connector.
 
 ## How it works
 
-The MemCard MCP server at `mcp.memcard.dev` is an OAuth-enabled remote MCP server. Claude Desktop connects to it directly over HTTP — no local extension or proxy needed. The server acts as the OAuth provider via `@cloudflare/workers-oauth-provider`, with GitHub sign-in handled by Better Auth.
+The Streamboard MCP server at `mcp.usestreamboard.com` is an OAuth-enabled remote MCP server. Claude Desktop connects to it directly over HTTP — no local extension or proxy needed. The server acts as the OAuth provider via `@cloudflare/workers-oauth-provider`, with GitHub sign-in handled by Better Auth.
 
-**OAuth endpoints** (all on `mcp.memcard.dev`):
+**OAuth endpoints** (all on `mcp.usestreamboard.com`):
 - `/register` — Dynamic client registration
 - `/authorize` — Authorization (redirects to GitHub sign-in)
 - `/token` — Token exchange
@@ -16,7 +16,7 @@ The MemCard MCP server at `mcp.memcard.dev` is an OAuth-enabled remote MCP serve
 
 1. Open **Claude Desktop** > **Settings** > **Connectors**
 2. Click **Add custom connector**
-3. Enter the URL: `https://mcp.memcard.dev/mcp`
+3. Enter the URL: `https://mcp.usestreamboard.com/mcp`
 4. Click **Add**
 5. On first use, you'll be redirected to sign in with GitHub
 
