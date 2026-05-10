@@ -1,0 +1,24 @@
+{
+	"schema_version": "v1",
+	"name_for_human": "memcard",
+	"name_for_model": "memcard",
+	"description_for_human": "Create and review spaced-repetition flashcards using the Leitner box system.",
+	"description_for_model": "You are interacting with the memcard API, a spaced-repetition flashcard system using the Leitner box system. Users organize flashcards into decks. Each card has a front (question) and back (answer). Cards progress through boxes 1-5 based on review results: passing moves a card to a higher box with longer review intervals, failing moves it back to box 1. Use the review endpoints to fetch due cards and submit pass/fail results. When creating cards, keep fronts as clear questions and backs as concise answers.",
+	"auth": {
+		"type": "oauth",
+		"client_url": "https://mcp.memcard.dev/authorize",
+		"authorization_url": "https://mcp.memcard.dev/token",
+		"scope": "",
+		"authorization_content_type": "application/json",
+		"verification_tokens": {
+			"openai": "<REPLACE_WITH_VERIFICATION_TOKEN>"
+		}
+	},
+	"api": {
+		"type": "openapi",
+		"url": "https://memcard.dev/api/openapi.json"
+	},
+	"logo_url": "https://memcard.dev/favicon.svg",
+	"contact_email": "support@memcard.dev",
+	"legal_info_url": "https://memcard.dev/terms"
+}
