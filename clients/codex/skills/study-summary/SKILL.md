@@ -1,6 +1,6 @@
 ---
 name: study-summary
-description: Show a summary of your MemCard study progress across all decks
+description: Show a summary of your Streamboard study progress across all decks
 ---
 
 # Study Summary

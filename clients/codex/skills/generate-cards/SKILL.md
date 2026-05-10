@@ -1,6 +1,6 @@
 ---
 name: generate-cards
-description: Generate flashcards from source material (files, notes, documentation) and add them to a MemCard deck
+description: Generate flashcards from source material (files, notes, documentation) and add them to a Streamboard deck
 argument-hint: "<file-or-topic> [deck-slug]"
 ---
 

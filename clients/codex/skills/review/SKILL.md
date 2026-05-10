@@ -1,6 +1,6 @@
 ---
 name: review
-description: Start a spaced-repetition review session for your MemCard flashcards
+description: Start a spaced-repetition review session for your Streamboard flashcards
 argument-hint: "[deck-slug]"
 ---
 

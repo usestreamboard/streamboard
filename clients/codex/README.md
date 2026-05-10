@@ -1,12 +1,12 @@
-# MemCard Integration for OpenAI Codex
+# Streamboard Integration for OpenAI Codex
 
-A Codex integration that connects to the MemCard MCP server for spaced-repetition flashcard management.
+A Codex integration that connects to the Streamboard MCP server for spaced-repetition flashcard management.
 
 ## Prerequisites
 
 - [Codex CLI](https://github.com/openai/codex) installed
-- A deployed MemCard MCP server (see `apps/mcp/`)
-- A MemCard account (email/password)
+- A deployed Streamboard MCP server (see `apps/mcp/`)
+- A Streamboard account (email/password)
 
 ## Installation
 
@@ -24,7 +24,7 @@ cp -r integrations/codex/skills/* .codex/skills/
 
 3. Trust the project when Codex prompts you, so it picks up `.codex/config.toml`.
 
-4. Authenticate with the MemCard MCP server on first use — Codex will handle the OAuth flow.
+4. Authenticate with the Streamboard MCP server on first use — Codex will handle the OAuth flow.
 
 ## Skills
 
@@ -35,11 +35,11 @@ cp -r integrations/codex/skills/* .codex/skills/
 | `generate-cards <file> [deck-slug]` | Generate flashcards from source files or docs |
 | `study-summary` | Show study progress across all decks |
 
-The `memcard-context` skill is loaded automatically when you ask about the Leitner system or spaced repetition.
+The `streamboard-context` skill is loaded automatically when you ask about the Leitner system or spaced repetition.
 
 ## Project Instructions
 
-Copy `AGENTS.md` to your project root to give Codex context about the MemCard system:
+Copy `AGENTS.md` to your project root to give Codex context about the Streamboard system:
 
 ```bash
 cp integrations/codex/AGENTS.md AGENTS.md

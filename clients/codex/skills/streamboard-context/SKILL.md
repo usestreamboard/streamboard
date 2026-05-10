@@ -1,11 +1,11 @@
 ---
-name: memcard-context
-description: Background knowledge about the MemCard spaced-repetition system, Leitner boxes, and available MCP tools. Use when the user asks about flashcards, spaced repetition, Leitner system, or MemCard.
+name: streamboard-context
+description: Background knowledge about the Streamboard spaced-repetition system, Leitner boxes, and available MCP tools. Use when the user asks about flashcards, spaced repetition, Leitner system, or Streamboard.
 ---
 
-# MemCard System Context
+# Streamboard System Context
 
-MemCard is a spaced-repetition flashcard app using the Leitner box system.
+Streamboard is a spaced-repetition flashcard app using the Leitner box system.
 
 ## Leitner Box System
 

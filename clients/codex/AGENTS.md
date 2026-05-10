@@ -1,6 +1,6 @@
-# MemCard
+# Streamboard
 
-MemCard is a spaced-repetition flashcard app using the Leitner box system. This project connects to a remote MCP server at `mcp.memcard.dev` for all flashcard operations.
+Streamboard is a spaced-repetition flashcard app using the Leitner box system. This project connects to a remote MCP server at `mcp.usestreamboard.com` for all flashcard operations.
 
 ## Available MCP Tools
 

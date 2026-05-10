@@ -1,6 +1,6 @@
 ---
 name: create-deck
-description: Create a new MemCard deck and optionally populate it with flashcards from a topic
+description: Create a new Streamboard deck and optionally populate it with flashcards from a topic
 argument-hint: "<topic-or-title>"
 ---
 
