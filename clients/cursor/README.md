@@ -1,10 +1,10 @@
-# MemCard for Cursor
+# Streamboard for Cursor
 
-Connect MemCard's spaced-repetition flashcard tools to Cursor via MCP.
+Connect Streamboard's spaced-repetition flashcard tools to Cursor via MCP.
 
 ## How it works
 
-The MemCard MCP server at `mcp.memcard.dev` is an OAuth-enabled remote MCP server. Cursor connects to it directly over Streamable HTTP — no local proxy needed. Authentication uses GitHub sign-in via Better Auth.
+The Streamboard MCP server at `mcp.usestreamboard.com` is an OAuth-enabled remote MCP server. Cursor connects to it directly over Streamable HTTP — no local proxy needed. Authentication uses GitHub sign-in via Better Auth.
 
 ## Setup
 
@@ -16,14 +16,14 @@ Copy the config into your project:
 cp -r integrations/cursor/.cursor .cursor
 ```
 
-Or add the `memcard` entry to your existing `.cursor/mcp.json`:
+Or add the `streamboard` entry to your existing `.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "memcard": {
+    "streamboard": {
       "type": "http",
-      "url": "https://mcp.memcard.dev/mcp"
+      "url": "https://mcp.usestreamboard.com/mcp"
     }
   }
 }
@@ -35,7 +35,7 @@ The config can be project-scoped (`.cursor/mcp.json`) or global (`~/.cursor/mcp.
 
 1. Open **Cursor** → **Settings** → **Tools & MCP**
 2. Click **New MCP Server**
-3. Enter the URL: `https://mcp.memcard.dev/mcp`
+3. Enter the URL: `https://mcp.usestreamboard.com/mcp`
 4. Set transport to **Streamable HTTP**
 5. On first use, authenticate via OAuth in your browser
 
