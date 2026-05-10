@@ -1,0 +1,3 @@
+[mcp_servers.memcard]
+type = "url"
+url = "https://mcp.memcard.dev/mcp"
