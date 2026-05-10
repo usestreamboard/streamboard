@@ -1,10 +1,10 @@
-# MemCard for Gemini CLI
+# Streamboard for Gemini CLI
 
-Connect MemCard's spaced-repetition flashcard tools to the Gemini CLI via MCP.
+Connect Streamboard's spaced-repetition flashcard tools to the Gemini CLI via MCP.
 
 ## How it works
 
-The MemCard MCP server at `mcp.memcard.dev` is an OAuth-enabled remote MCP server. Gemini CLI connects to it directly over HTTP — no local proxy needed. Authentication uses GitHub sign-in via Better Auth.
+The Streamboard MCP server at `mcp.usestreamboard.com` is an OAuth-enabled remote MCP server. Gemini CLI connects to it directly over HTTP — no local proxy needed. Authentication uses GitHub sign-in via Better Auth.
 
 ## Setup
 
@@ -14,13 +14,13 @@ The MemCard MCP server at `mcp.memcard.dev` is an OAuth-enabled remote MCP serve
 cp -r integrations/gemini/.gemini .gemini
 ```
 
-Or add the `memcard` entry to your existing `.gemini/settings.json`:
+Or add the `streamboard` entry to your existing `.gemini/settings.json`:
 
 ```json
 {
   "mcpServers": {
-    "memcard": {
-      "httpUrl": "https://mcp.memcard.dev/mcp"
+    "streamboard": {
+      "httpUrl": "https://mcp.usestreamboard.com/mcp"
     }
   }
 }
@@ -47,5 +47,5 @@ Or add the `memcard` entry to your existing `.gemini/settings.json`:
 
 ## Note on other Gemini platforms
 
-- **Gemini Enterprise**: Supports custom MCP server connectors (currently in preview, requires allowlist access). Use the same URL: `https://mcp.memcard.dev/mcp`
+- **Gemini Enterprise**: Supports custom MCP server connectors (currently in preview, requires allowlist access). Use the same URL: `https://mcp.usestreamboard.com/mcp`
 - **Gemini web app** (gemini.google.com): Does not support custom MCP connectors yet.
