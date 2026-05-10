@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "memcard": {
+      "type": "http",
+      "url": "https://mcp.memcard.dev/mcp"
+    }
+  }
+}
