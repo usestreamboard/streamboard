@@ -1,8 +1,8 @@
 ---
 name: generate-cards
-description: Generate flashcards from source material (files, notes, documentation) and add them to a MemCard deck
+description: Generate flashcards from source material (files, notes, documentation) and add them to a Streamboard deck
 disable-model-invocation: true
-allowed-tools: Bash(memcard *), Read, Glob, Grep
+allowed-tools: Bash(streamboard *), Read, Glob, Grep
 argument-hint: "<file-or-topic> [deck-slug]"
 ---
 
@@ -15,7 +15,7 @@ Create flashcards from files, code, or documentation and add them to a deck.
 1. Parse "$ARGUMENTS":
    - If a file path is provided, read it with the Read tool.
    - If a deck slug is provided as the second argument, use that deck.
-   - Otherwise, run `memcard decks ls` and ask which deck to add cards to.
+   - Otherwise, run `streamboard decks ls` and ask which deck to add cards to.
 
 2. Analyze the source material and generate flashcards:
    - For code: create cards about functions, patterns, APIs, and key concepts
@@ -26,7 +26,7 @@ Create flashcards from files, code, or documentation and add them to a deck.
 
 4. Create approved cards by piping JSON to stdin:
    ```bash
-   echo '[{"front":"Q1","back":"A1","tags":["topic"],"sourceNote":"source.ts"}]' | memcard cards batch-create <deck-id> --stdin
+   echo '[{"front":"Q1","back":"A1","tags":["topic"],"sourceNote":"source.ts"}]' | streamboard cards batch-create <deck-id> --stdin
    ```
    Add relevant `tags` and set `sourceNote` to reference the original source.
 

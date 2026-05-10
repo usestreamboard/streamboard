@@ -1,8 +1,8 @@
 ---
 name: create-deck
-description: Create a new MemCard deck and optionally populate it with flashcards from a topic
+description: Create a new Streamboard deck and optionally populate it with flashcards from a topic
 disable-model-invocation: true
-allowed-tools: Bash(memcard *)
+allowed-tools: Bash(streamboard *)
 argument-hint: "<topic-or-title>"
 ---
 
@@ -14,13 +14,13 @@ Create a new flashcard deck and optionally generate cards for it.
 
 1. Use "$ARGUMENTS" as the deck topic or title.
 
-2. Create the deck: `memcard decks create "<title>" --desc "<description>"`
+2. Create the deck: `streamboard decks create "<title>" --desc "<description>"`
 
 3. Ask the user if they want to generate cards for this deck now.
    - If yes, generate 10-15 high-quality flashcards covering the topic.
    - Create all cards in one call by piping JSON to stdin:
      ```bash
-     echo '[{"front":"Q","back":"A","tags":["topic"]}]' | memcard cards batch-create <deck-id> --stdin
+     echo '[{"front":"Q","back":"A","tags":["topic"]}]' | streamboard cards batch-create <deck-id> --stdin
      ```
    - Add relevant `tags` to each card for categorization.
 

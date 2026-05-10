@@ -1,8 +1,8 @@
 ---
 name: review
-description: Start a spaced-repetition review session for your MemCard flashcards
+description: Start a spaced-repetition review session for your Streamboard flashcards
 disable-model-invocation: true
-allowed-tools: Bash(memcard *)
+allowed-tools: Bash(streamboard *)
 argument-hint: "[deck-slug]"
 ---
 
@@ -12,12 +12,12 @@ Start a flashcard review session using the Leitner box system.
 
 ## Steps
 
-1. If "$ARGUMENTS" is provided, treat it as a deck slug. Run `memcard decks ls` to find the
-   matching deck's ID, then run `memcard review due <deck-id>`. If no argument is
-   provided, run `memcard decks ls` to show all decks with due counts and ask which deck to
+1. If "$ARGUMENTS" is provided, treat it as a deck slug. Run `streamboard decks ls` to find the
+   matching deck's ID, then run `streamboard review due <deck-id>`. If no argument is
+   provided, run `streamboard decks ls` to show all decks with due counts and ask which deck to
    review (or offer to review all due cards).
 
-2. Fetch due cards with `memcard review due` (optionally with deck-id).
+2. Fetch due cards with `streamboard review due` (optionally with deck-id).
 
 3. If no cards are due, tell the user and stop.
 
@@ -26,7 +26,7 @@ Start a flashcard review session using the Leitner box system.
    - Wait for the user to respond (they will attempt to answer or say "show answer")
    - Show the **back** of the card
    - Ask: "Did you get it right? (pass/fail)"
-   - Submit the result with `memcard review submit <card-id> <pass|fail>`
+   - Submit the result with `streamboard review submit <card-id> <pass|fail>`
    - Report the new box number and next review date
 
 5. After all cards are reviewed, show a summary:
