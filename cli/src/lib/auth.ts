@@ -1,11 +1,11 @@
 import { ORPCError } from "@orpc/client"
-import type { MemcardClient } from "./client"
+import type { StreamboardClient } from "./client"
 import { createClient } from "./client"
 import { resolveAuth } from "./config"
 import { outputError } from "./output"
 
 /** Resolve auth and return a ready-to-use client. Exits if not authenticated. */
-export function requireClient(): MemcardClient {
+export function requireClient(): StreamboardClient {
   const auth = resolveAuth()
   if (!auth) {
     outputError("Not logged in. Run: streamboard login", {

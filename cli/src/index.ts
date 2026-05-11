@@ -6,6 +6,7 @@ import { authCommand } from "./commands/auth-flow"
 import { captureCommand } from "./commands/capture"
 import { cardsCommand } from "./commands/cards"
 import { coursesCommand } from "./commands/courses"
+import { dashboardsCommand } from "./commands/dashboards"
 import { decksCommand } from "./commands/decks"
 import { reviewCommand } from "./commands/review"
 import { skillCommand } from "./commands/skill"
@@ -15,7 +16,7 @@ const main = defineCommand({
     name: "streamboard",
     version: __CLI_VERSION__,
     description:
-      "Agent-optimized CLI for streamboard spaced-repetition flashcards",
+      "Agent-optimized CLI for streamboard — generative-UI dashboards",
   },
   subCommands: {
     login: loginCommand,
@@ -28,6 +29,7 @@ const main = defineCommand({
     review: reviewCommand,
     courses: coursesCommand,
     capture: captureCommand,
+    dashboards: dashboardsCommand,
   },
 })
 
