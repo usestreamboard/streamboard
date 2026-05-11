@@ -1,7 +1,7 @@
 {
   "mcpServers": {
-    "memcard": {
-      "httpUrl": "https://mcp.memcard.dev/mcp"
+    "streamboard": {
+      "httpUrl": "https://mcp.usestreamboard.com/mcp"
     }
   }
 }
