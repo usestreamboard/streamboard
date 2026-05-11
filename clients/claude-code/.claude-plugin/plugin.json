@@ -1,7 +1,7 @@
 {
-  "name": "memcard",
+  "name": "streamboard",
   "version": "1.0.0",
-  "description": "MemCard spaced-repetition flashcard tools. Connects to the MemCard MCP server for deck management, card creation, and review sessions.",
-  "author": { "name": "MemCard" },
-  "keywords": ["flashcards", "spaced-repetition", "leitner", "memcard"]
+  "description": "streamboard spaced-repetition flashcard tools. Connects to the streamboard MCP server for deck management, card creation, and review sessions.",
+  "author": { "name": "streamboard" },
+  "keywords": ["flashcards", "spaced-repetition", "leitner", "streamboard"]
 }
