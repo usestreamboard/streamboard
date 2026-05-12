@@ -95,17 +95,21 @@ const create = defineCommand({
     },
   },
   async run({ args }) {
-    const spec = await readStdin<unknown>()
-    const client = requireClient()
-    const data = await rpc(() =>
-      client.dashboards.create({
-        title: args.title,
-        spec,
-        isPublic: args.public,
-        themePreset: args.preset ?? undefined,
-      }),
+    // The oRPC `dashboards.create` route is currently disabled — writes
+    // happen exclusively via the MCP server (`apps/mcp/src/tools/dashboards.ts`).
+    // The CLI's `create`/`update` commands will be re-enabled once the
+    // browser-side AI chat surface ships and the procedure is re-exported.
+    // See `packages/api/src/orpc/routes/dashboards.ts` and REVIEW.md #3.
+    void args
+    void readStdin
+    void requireClient
+    void rpc
+    void output
+    void viewerUrl
+    console.error(
+      'dashboards create is currently MCP-only. Wire your MCP client to streamboard and call the "create_dashboard" tool.',
     )
-    output({ ...data, url: viewerUrl(data.id) }, args.pretty)
+    process.exit(2)
   },
 })
 
@@ -128,19 +132,12 @@ const update = defineCommand({
     },
   },
   async run({ args }) {
-    const spec = await readStdin<unknown>()
-    const client = requireClient()
-    // tri-state: omit → undefined (inherit), "-" → null (clear), value → set.
-    const themePreset =
-      args.preset === undefined
-        ? undefined
-        : args.preset === "-"
-          ? null
-          : args.preset
-    const data = await rpc(() =>
-      client.dashboards.update({ id: args.id, spec, themePreset }),
+    // See the `create` command above — same reason.
+    void args
+    console.error(
+      'dashboards update is currently MCP-only. Wire your MCP client to streamboard and call the "update_dashboard" tool.',
     )
-    output({ ...data, url: viewerUrl(data.id) }, args.pretty)
+    process.exit(2)
   },
 })
 
