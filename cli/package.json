@@ -24,6 +24,7 @@
   "dependencies": {
     "@clack/prompts": "^0.10.0",
     "@orpc/client": "^1.13.9",
+    "@streamboard/streamboards": "workspace:*",
     "citty": "^0.1.6"
   },
   "devDependencies": {
