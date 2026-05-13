@@ -102,21 +102,17 @@ const create = defineCommand({
     },
   },
   async run({ args }) {
-    // The oRPC `streamboards.create` route is currently disabled — writes
-    // happen exclusively via the MCP server (`apps/mcp/src/tools/streamboards.ts`).
-    // The CLI's `create`/`update` commands will be re-enabled once the
-    // browser-side AI chat surface ships and the procedure is re-exported.
-    // See `packages/api/src/orpc/routes/streamboards.ts` and REVIEW.md #3.
-    void args
-    void readStdin
-    void requireClient
-    void rpc
-    void output
-    void viewerUrl
-    console.error(
-      'streamboards create is currently MCP-only. Wire your MCP client to streamboard and call the "create_streamboard" tool.',
+    const spec = await readStdin<unknown>()
+    const client = requireClient()
+    const data = await rpc(() =>
+      client.streamboards.create({
+        title: args.title,
+        spec,
+        isPublic: args.public,
+        themePreset: args.preset ?? null,
+      }),
     )
-    process.exit(2)
+    output({ ...data, url: viewerUrl(data.id) }, args.pretty)
   },
 })
 
@@ -139,12 +135,24 @@ const update = defineCommand({
     },
   },
   async run({ args }) {
-    // See the `create` command above — same reason.
-    void args
-    console.error(
-      'streamboards update is currently MCP-only. Wire your MCP client to streamboard and call the "update_streamboard" tool.',
+    const spec = await readStdin<unknown>()
+    const client = requireClient()
+    // `--preset` is tri-state: omit to inherit (undefined), `-` clears
+    // (explicit null), any other string sets a preset code.
+    const themePreset =
+      args.preset === undefined
+        ? undefined
+        : args.preset === "-"
+          ? null
+          : args.preset
+    const data = await rpc(() =>
+      client.streamboards.update({
+        id: args.id,
+        spec,
+        themePreset,
+      }),
     )
-    process.exit(2)
+    output({ ...data, url: viewerUrl(data.id) }, args.pretty)
   },
 })
 
