@@ -427,21 +427,21 @@ const push = defineCommand({
     const token = resolveDataToken(args.token)
     const baseUrl = resolveDataBaseUrl(args["base-url"])
 
-    const rawJson = args.state ?? (await readStdin())
-    if (!rawJson?.trim()) {
-      throw new Error(
-        "Missing state JSON. Pass --state '{\"…\":…}' or pipe JSON via stdin.",
-      )
-    }
+    // --state takes raw JSON; otherwise read + parse from stdin.
+    // readStdin already JSON.parses and exits on bad input.
+    const state: unknown =
+      args.state !== undefined
+        ? (() => {
+            try {
+              return JSON.parse(args.state)
+            } catch (err) {
+              throw new Error(
+                `Invalid JSON in --state: ${err instanceof Error ? err.message : String(err)}`,
+              )
+            }
+          })()
+        : await readStdin<unknown>()
 
-    let state: unknown
-    try {
-      state = JSON.parse(rawJson)
-    } catch (err) {
-      throw new Error(
-        `Invalid JSON in state: ${err instanceof Error ? err.message : String(err)}`,
-      )
-    }
     if (!state || typeof state !== "object" || Array.isArray(state)) {
       throw new Error("State must be a JSON object.")
     }
