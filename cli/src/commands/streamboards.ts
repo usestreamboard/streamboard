@@ -11,7 +11,7 @@ function viewerUrl(id: string): string {
 }
 
 const ls = defineCommand({
-  meta: { name: "ls", description: "List dashboards" },
+  meta: { name: "ls", description: "List streamboards" },
   args: {
     limit: {
       type: "string",
@@ -32,7 +32,7 @@ const ls = defineCommand({
   async run({ args }) {
     const client = requireClient()
     const data = await rpc(() =>
-      client.dashboards.list({
+      client.streamboards.list({
         limit: Number(args.limit),
         offset: Number(args.offset),
       }),
@@ -42,9 +42,9 @@ const ls = defineCommand({
 })
 
 const get = defineCommand({
-  meta: { name: "get", description: "Get a dashboard's spec and metadata" },
+  meta: { name: "get", description: "Get a streamboard's spec and metadata" },
   args: {
-    id: { type: "positional", description: "Dashboard ID", required: true },
+    id: { type: "positional", description: "Streamboard ID", required: true },
     version: {
       type: "string",
       description: "Specific version (default: latest)",
@@ -58,7 +58,7 @@ const get = defineCommand({
   async run({ args }) {
     const client = requireClient()
     const data = await rpc(() =>
-      client.dashboards.get({
+      client.streamboards.get({
         id: args.id,
         version: args.version ? Number(args.version) : undefined,
       }),
@@ -70,23 +70,23 @@ const get = defineCommand({
 const create = defineCommand({
   meta: {
     name: "create",
-    description: "Create a dashboard from a json-render spec on stdin",
+    description: "Create a streamboard from a json-render spec on stdin",
   },
   args: {
     title: {
       type: "positional",
-      description: "Dashboard title",
+      description: "Streamboard title",
       required: true,
     },
     public: {
       type: "boolean",
-      description: "Make dashboard publicly viewable (default: true)",
+      description: "Make streamboard publicly viewable (default: true)",
       default: true,
     },
     preset: {
       type: "string",
       description:
-        "shadcn-presets code (e.g. 'b1ZjC5Fqt') for the dashboard theme",
+        "shadcn-presets code (e.g. 'b1ZjC5Fqt') for the streamboard theme",
     },
     pretty: {
       type: "boolean",
@@ -95,11 +95,11 @@ const create = defineCommand({
     },
   },
   async run({ args }) {
-    // The oRPC `dashboards.create` route is currently disabled — writes
-    // happen exclusively via the MCP server (`apps/mcp/src/tools/dashboards.ts`).
+    // The oRPC `streamboards.create` route is currently disabled — writes
+    // happen exclusively via the MCP server (`apps/mcp/src/tools/streamboards.ts`).
     // The CLI's `create`/`update` commands will be re-enabled once the
     // browser-side AI chat surface ships and the procedure is re-exported.
-    // See `packages/api/src/orpc/routes/dashboards.ts` and REVIEW.md #3.
+    // See `packages/api/src/orpc/routes/streamboards.ts` and REVIEW.md #3.
     void args
     void readStdin
     void requireClient
@@ -107,7 +107,7 @@ const create = defineCommand({
     void output
     void viewerUrl
     console.error(
-      'dashboards create is currently MCP-only. Wire your MCP client to streamboard and call the "create_dashboard" tool.',
+      'streamboards create is currently MCP-only. Wire your MCP client to streamboard and call the "create_streamboard" tool.',
     )
     process.exit(2)
   },
@@ -117,10 +117,10 @@ const update = defineCommand({
   meta: {
     name: "update",
     description:
-      "Append a new version to a dashboard from a json-render spec on stdin",
+      "Append a new version to a streamboard from a json-render spec on stdin",
   },
   args: {
-    id: { type: "positional", description: "Dashboard ID", required: true },
+    id: { type: "positional", description: "Streamboard ID", required: true },
     preset: {
       type: "string",
       description: "shadcn-presets code; pass '-' to clear; omit to inherit",
@@ -135,16 +135,19 @@ const update = defineCommand({
     // See the `create` command above — same reason.
     void args
     console.error(
-      'dashboards update is currently MCP-only. Wire your MCP client to streamboard and call the "update_dashboard" tool.',
+      'streamboards update is currently MCP-only. Wire your MCP client to streamboard and call the "update_streamboard" tool.',
     )
     process.exit(2)
   },
 })
 
 const rm = defineCommand({
-  meta: { name: "rm", description: "Delete a dashboard and all its versions" },
+  meta: {
+    name: "rm",
+    description: "Delete a streamboard and all its versions",
+  },
   args: {
-    id: { type: "positional", description: "Dashboard ID", required: true },
+    id: { type: "positional", description: "Streamboard ID", required: true },
     pretty: {
       type: "boolean",
       description: "Human-readable output",
@@ -153,15 +156,15 @@ const rm = defineCommand({
   },
   async run({ args }) {
     const client = requireClient()
-    const data = await rpc(() => client.dashboards.delete({ id: args.id }))
+    const data = await rpc(() => client.streamboards.delete({ id: args.id }))
     output(data, args.pretty)
   },
 })
 
 const versions = defineCommand({
-  meta: { name: "versions", description: "List all versions of a dashboard" },
+  meta: { name: "versions", description: "List all versions of a streamboard" },
   args: {
-    id: { type: "positional", description: "Dashboard ID", required: true },
+    id: { type: "positional", description: "Streamboard ID", required: true },
     pretty: {
       type: "boolean",
       description: "Human-readable output",
@@ -171,13 +174,13 @@ const versions = defineCommand({
   async run({ args }) {
     const client = requireClient()
     const data = await rpc(() =>
-      client.dashboards.listVersions({ id: args.id }),
+      client.streamboards.listVersions({ id: args.id }),
     )
     output(data, args.pretty)
   },
 })
 
-export const dashboardsCommand = defineCommand({
-  meta: { name: "dashboards", description: "Manage dashboards" },
+export const streamboardsCommand = defineCommand({
+  meta: { name: "streamboards", description: "Manage streamboards" },
   subCommands: { ls, get, create, update, rm, versions },
 })

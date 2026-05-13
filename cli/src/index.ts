@@ -6,17 +6,17 @@ import { authCommand } from "./commands/auth-flow"
 import { captureCommand } from "./commands/capture"
 import { cardsCommand } from "./commands/cards"
 import { coursesCommand } from "./commands/courses"
-import { dashboardsCommand } from "./commands/dashboards"
 import { decksCommand } from "./commands/decks"
 import { reviewCommand } from "./commands/review"
 import { skillCommand } from "./commands/skill"
+import { streamboardsCommand } from "./commands/streamboards"
 
 const main = defineCommand({
   meta: {
     name: "streamboard",
     version: __CLI_VERSION__,
     description:
-      "Agent-optimized CLI for streamboard — generative-UI dashboards",
+      "Agent-optimized CLI for streamboard — generative-UI streamboards",
   },
   subCommands: {
     login: loginCommand,
@@ -29,7 +29,7 @@ const main = defineCommand({
     review: reviewCommand,
     courses: coursesCommand,
     capture: captureCommand,
-    dashboards: dashboardsCommand,
+    streamboards: streamboardsCommand,
   },
 })
 
