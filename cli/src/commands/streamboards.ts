@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"
+import { Streamboard, StreamboardError } from "@streamboard/sdk"
 import {
   type BindField,
   buildStateInterfaceBody,
@@ -347,7 +348,133 @@ const codegen = defineCommand({
   },
 })
 
+// ─── Push (live data) ─────────────────────────────────────────────
+
+/**
+ * Resolve the data token from CLI args / env. Order:
+ *   1. --token flag (explicit)
+ *   2. STREAMBOARD_DATA_TOKEN env var (dedicated)
+ *   3. STREAMBOARD_TOKEN env var, but only if it parses as `sb_d_…`
+ *      (the same env var carries the session OAuth bearer elsewhere
+ *      in the CLI — we don't want to send THAT to a bearer-auth
+ *      surface).
+ */
+function resolveDataToken(flagToken: string | undefined): string {
+  const raw =
+    flagToken ??
+    process.env.STREAMBOARD_DATA_TOKEN ??
+    (process.env.STREAMBOARD_TOKEN?.startsWith(DATA_TOKEN_PREFIX)
+      ? process.env.STREAMBOARD_TOKEN
+      : undefined)
+  if (!raw) {
+    throw new Error(
+      "Missing data token. Pass --token sb_d_… or set STREAMBOARD_DATA_TOKEN.",
+    )
+  }
+  if (!raw.startsWith(DATA_TOKEN_PREFIX)) {
+    throw new Error(
+      `Invalid data token shape. Expected a token starting with \`${DATA_TOKEN_PREFIX}\`.`,
+    )
+  }
+  return raw
+}
+
+function resolveDataBaseUrl(flag: string | undefined): string {
+  return (flag ?? process.env.STREAMBOARD_API_URL ?? DEFAULT_API_URL).replace(
+    /\/$/,
+    "",
+  )
+}
+
+const push = defineCommand({
+  meta: {
+    name: "push",
+    description:
+      "Push a state envelope to a streamboard (live data). JSON via --state or stdin.",
+  },
+  args: {
+    id: {
+      type: "positional",
+      description: "Streamboard id (the `<id>` segment in /s/<id>).",
+      required: true,
+    },
+    state: {
+      type: "string",
+      description: "State envelope as JSON. If omitted, reads JSON from stdin.",
+    },
+    token: {
+      type: "string",
+      description:
+        "Data token (sb_d_…). Defaults to STREAMBOARD_DATA_TOKEN env var.",
+    },
+    "base-url": {
+      type: "string",
+      description:
+        "API base URL. Defaults to STREAMBOARD_API_URL or https://usestreamboard.com.",
+    },
+    retries: {
+      type: "string",
+      description: "Max retries on 429 / 5xx. Default: 3. Pass 0 to disable.",
+      default: "3",
+    },
+    pretty: {
+      type: "boolean",
+      description: "Human-readable output",
+      default: false,
+    },
+  },
+  async run({ args }) {
+    const token = resolveDataToken(args.token)
+    const baseUrl = resolveDataBaseUrl(args["base-url"])
+
+    const rawJson = args.state ?? (await readStdin())
+    if (!rawJson?.trim()) {
+      throw new Error(
+        "Missing state JSON. Pass --state '{\"…\":…}' or pipe JSON via stdin.",
+      )
+    }
+
+    let state: unknown
+    try {
+      state = JSON.parse(rawJson)
+    } catch (err) {
+      throw new Error(
+        `Invalid JSON in state: ${err instanceof Error ? err.message : String(err)}`,
+      )
+    }
+    if (!state || typeof state !== "object" || Array.isArray(state)) {
+      throw new Error("State must be a JSON object.")
+    }
+
+    const board = new Streamboard({
+      token,
+      baseUrl,
+      streamboardId: args.id,
+      retries: Number(args.retries) || 0,
+    })
+
+    try {
+      const result = await board.push(state as Record<string, unknown>)
+      output(result, args.pretty)
+    } catch (err) {
+      if (err instanceof StreamboardError) {
+        // Render a structured error for shell pipelines.
+        process.stderr.write(
+          JSON.stringify({
+            ok: false,
+            kind: err.kind,
+            status: err.status,
+            error: err.message,
+          }) + "\n",
+        )
+        process.exit(1)
+      }
+      throw err
+    }
+  },
+})
+
 export const streamboardsCommand = defineCommand({
   meta: { name: "streamboards", description: "Manage streamboards" },
-  subCommands: { ls, get, create, update, rm, versions, codegen },
+  subCommands: { ls, get, create, update, rm, versions, codegen, push },
 })
