@@ -4,24 +4,11 @@ This directory contains the configuration for publishing Streamboard as a ChatGP
 
 ## Architecture
 
-The ChatGPT App uses the same MCP server as the Claude Desktop/Code integrations (`apps/mcp/`), with two additions:
+The ChatGPT App uses the same MCP server as the Claude Desktop/Code integrations (`apps/mcp/`), surfacing the streamboard authoring tools (`create_streamboard`, `update_streamboard`, `get_streamboard`, `list_versions`, `delete_streamboard`).
 
-1. **UI Widgets** — Interactive HTML widgets rendered in ChatGPT's iframe sandbox:
-   - `review-card.html` — Flashcard review with flip-to-reveal and pass/fail buttons
-   - `deck-list.html` — Overview of all decks with card counts and due counts
+**App Metadata** lives in `app-manifest.json` — name, description, logo, and auth config for the Apps Directory listing.
 
-2. **App Metadata** — `app-manifest.json` with name, description, logo, and auth config for the Apps Directory listing.
-
-Tools that have widgets use `registerAppTool` from `@modelcontextprotocol/ext-apps/server` and return both `content` (text for the model) and `structuredContent` (data for the widget). Clients that don't support widgets (Claude, other MCP clients) simply ignore the `structuredContent` and `_meta.ui` fields and use `content` as usual.
-
-## How widgets work
-
-1. Tool is called (e.g. `get_due_cards`)
-2. Response includes `_meta.ui.resourceUri` pointing to a `ui://` resource
-3. ChatGPT fetches the widget HTML via `resources/read`
-4. Widget renders in a sandboxed iframe
-5. Widget reads tool output from `window.openai.toolOutput`
-6. Widget can call other tools via `window.openai.callTool` (e.g. `submit_review`)
+Tools that ship structured output use `registerAppTool` from `@modelcontextprotocol/ext-apps/server` and return both `content` (text for the model) and `structuredContent` (data for downstream renderers). Clients that don't support structured content (Claude, other MCP clients) simply ignore the `structuredContent` + `_meta.ui` fields and use `content` as usual.
 
 ## Publishing to the ChatGPT Apps Directory
 
@@ -39,7 +26,7 @@ Tools that have widgets use `registerAppTool` from `@modelcontextprotocol/ext-ap
 4. Fill in metadata from `app-manifest.json`
 5. Test all tools and widgets in draft mode
 6. Click **Publish** from the **Drafts** tab
-7. Review safety warnings (write actions like `create_deck`, `submit_review` will be flagged)
+7. Review safety warnings (write actions like `create_streamboard`, `update_streamboard`, `delete_streamboard` will be flagged)
 
 ### Testing locally
 
