@@ -1,6 +1,6 @@
 # Streamboard for ChatGPT
 
-Connect Streamboard's spaced-repetition flashcard tools to ChatGPT.
+Connect Streamboard's generative-UI dashboard tools to ChatGPT. Author KPI tiles, charts, and tables as versioned json-render specs; push live data into bindable slots from your own runtime.
 
 ## Option 1: MCP Connector (Recommended)
 
@@ -21,19 +21,11 @@ ChatGPT natively supports MCP. Your existing MCP server at `mcp.usestreamboard.c
 
 | Tool | Description |
 |---|---|
-| `list_decks` | List all decks with card and due counts |
-| `get_deck` | Get deck details and all cards |
-| `create_deck` | Create a new deck |
-| `update_deck` | Update deck title or description |
-| `delete_deck` | Delete a deck and all cards |
-| `create_card` | Create a flashcard in a deck |
-| `update_card` | Update a flashcard |
-| `delete_card` | Delete a flashcard |
-| `batch_create_cards` | Create up to 100 cards at once |
-| `batch_update_cards` | Update up to 100 cards at once |
-| `get_due_cards` | Get cards due for review |
-| `submit_review` | Submit pass/fail for a card |
-| `reset_card` | Reset card to box 1 |
+| `create_streamboard` | Author a new streamboard from a json-render spec |
+| `update_streamboard` | Append a new version to an existing streamboard |
+| `get_streamboard` | Read the spec + metadata for a streamboard |
+| `list_versions` | List every version of a streamboard |
+| `delete_streamboard` | Permanent delete (owner / org admin only) |
 
 ---
 
