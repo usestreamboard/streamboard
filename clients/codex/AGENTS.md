@@ -1,22 +1,17 @@
 # Streamboard
 
-Streamboard is a spaced-repetition flashcard app using the Leitner box system. This project connects to a remote MCP server at `mcp.usestreamboard.com` for all flashcard operations.
+Streamboard is a generative-UI dashboard service. You author dashboards (KPI tiles, charts, tables, callouts) as json-render specs through the MCP tools below, and the user pushes live data into bindable slots from their own runtime. This project connects to a remote MCP server at `mcp.usestreamboard.com` over Streamable HTTP — no self-host needed.
 
 ## Available MCP Tools
 
-### Decks
-- `list_decks` — List all decks with card and due counts
-- `get_deck` — Get deck details and all cards. Params: `slug`
-- `create_deck` — Create a deck. Params: `title`, `description` (optional)
-- `update_deck` — Update deck. Params: `id`, `title` (optional), `description` (optional)
-- `delete_deck` — Delete deck and all cards. Params: `id`
+- `create_streamboard` — Author a new streamboard from a json-render spec. Returns `{id, version, url}`. Params: `title`, `spec`, `isPublic` (optional, default true), `themePreset` (optional shadcn-presets code)
+- `update_streamboard` — Append a new version to an existing streamboard. Atomic version bump — safe under concurrent updates. Params: `id`, `spec`, `themePreset` (optional; omit to inherit, null to clear)
+- `get_streamboard` — Read spec + metadata. Params: `id`, `version` (optional; omits to latest)
+- `list_versions` — List every version of a streamboard, oldest first. Params: `id`
+- `delete_streamboard` — Permanent delete (owner / org admin only). Params: `id`
 
-### Cards
-- `create_card` — Create a card. Params: `deckId`, `front`, `back`, `tags` (optional), `sourceNote` (optional)
-- `update_card` — Update a card. Params: `id`, `front` (optional), `back` (optional), `tags` (optional)
-- `delete_card` — Delete a card. Params: `id`
+## Spec authoring
 
-### Review
-- `get_due_cards` — Get cards due for review. Params: `deckId` (optional)
-- `submit_review` — Submit pass/fail. Params: `cardId`, `result` ("pass" | "fail")
-- `reset_card` — Reset card to box 1. Params: `cardId`
+Specs use the [json-render](https://npmjs.com/@json-render/core) format with a flat `elements` map. Components include `Card`, `Stack`, `Grid`, `Heading`, `Text`, `Alert`, `Badge`, `LineChart`, `AreaChart`, `BarChart`, `PieChart`, `KPI`, `StatGrid` (full catalog surfaced in the tool description).
+
+For values that should update at runtime without re-authoring, use `{ $bind: "field.path" }` refs in any bindable slot — `KPI.value/delta/trend`, all chart `data` props, `StatGrid.stats`. The user then mints a per-streamboard data token in Settings and POSTs fresh state to `/api/data/v1/streamboards/<id>` via `@streamboard/sdk` or shell.
