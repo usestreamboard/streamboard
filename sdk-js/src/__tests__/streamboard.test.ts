@@ -259,3 +259,156 @@ describe("Streamboard.push — retries", () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
+
+describe("Streamboard.pull — success", () => {
+  test("GETs /api/data/v1/streamboards/<id> with bearer header and parses the envelope", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        streamboardId: STREAMBOARD_ID,
+        version: 3,
+        updatedAt: 1747235600123,
+        state: { kpis: { mrr: { value: "$48k" } } },
+      }),
+    )
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+
+    const result = await board.pull()
+
+    expect(result.streamboardId).toBe(STREAMBOARD_ID)
+    expect(result.version).toBe(3)
+    expect(result.updatedAt).toBe(1747235600123)
+    expect(result.state).toEqual({ kpis: { mrr: { value: "$48k" } } })
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe(
+      `https://usestreamboard.com/api/data/v1/streamboards/${STREAMBOARD_ID}`,
+    )
+    expect(init.method).toBe("GET")
+    expect(init.headers["Authorization"]).toBe(`Bearer ${TOKEN}`)
+    // No body on GET, no Content-Type either (the request is bodyless).
+    expect(init.body).toBeUndefined()
+    expect(init.headers["Content-Type"]).toBeUndefined()
+  })
+
+  test("accepts an empty state envelope (no push has happened yet)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        streamboardId: STREAMBOARD_ID,
+        version: 1,
+        updatedAt: null,
+        state: {},
+      }),
+    )
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const result = await board.pull()
+    expect(result.state).toEqual({})
+    expect(result.updatedAt).toBeNull()
+  })
+
+  test("PullOptions.streamboardId overrides for a single call", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        streamboardId: "other-id",
+        version: 1,
+        updatedAt: null,
+        state: {},
+      }),
+    )
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    await board.pull({ streamboardId: "other-id" })
+    const [url] = fetchMock.mock.calls[0]
+    expect(url).toBe(
+      "https://usestreamboard.com/api/data/v1/streamboards/other-id",
+    )
+  })
+})
+
+describe("Streamboard.pull — error mapping", () => {
+  test("401 -> StreamboardAuthError", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse({ error: "Invalid token" }, { status: 401 }),
+      )
+    const board = new Streamboard({
+      token: TOKEN,
+      fetch: fetchMock,
+      retries: 0,
+    })
+    await expect(board.pull()).rejects.toBeInstanceOf(StreamboardAuthError)
+  })
+
+  test("404 -> StreamboardNotFoundError", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse({ error: "Streamboard not found" }, { status: 404 }),
+      )
+    const board = new Streamboard({
+      token: TOKEN,
+      fetch: fetchMock,
+      retries: 0,
+    })
+    await expect(board.pull()).rejects.toBeInstanceOf(StreamboardNotFoundError)
+  })
+
+  test("429 -> StreamboardRateLimitError after retries", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse({ error: "Rate limit exceeded" }, { status: 429 }),
+      )
+    const board = new Streamboard({
+      token: TOKEN,
+      fetch: fetchMock,
+      retries: 0,
+    })
+    await expect(board.pull()).rejects.toBeInstanceOf(StreamboardRateLimitError)
+  })
+
+  test("malformed response body -> StreamboardError(kind=protocol)", async () => {
+    // Server returns 200 OK but with the wrong shape — SDK should
+    // surface that instead of returning garbage.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ totally: "wrong" }))
+    const board = new Streamboard({
+      token: TOKEN,
+      fetch: fetchMock,
+      retries: 0,
+    })
+    await expect(board.pull()).rejects.toMatchObject({ kind: "protocol" })
+  })
+
+  test("pre-aborted signal short-circuits before the first fetch", async () => {
+    const fetchMock = vi.fn()
+    const board = new Streamboard({
+      token: TOKEN,
+      fetch: fetchMock,
+      retries: 0,
+    })
+    const ctrl = new AbortController()
+    ctrl.abort()
+    await expect(board.pull({ signal: ctrl.signal })).rejects.toMatchObject({
+      kind: "aborted",
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+// Also confirm push tests still see only "PushOptions" / "PushResult"
+// shapes — the underlying refactor of requestWithRetries from a
+// PushResult-typed signature to `unknown` could in principle silently
+// regress callers; the success-shape guard in push() catches that.
+describe("Streamboard.push — protocol guard after refactor", () => {
+  test("push rejects when server returns a body without ok: true", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ wat: "no ok" }))
+    const board = new Streamboard({
+      token: TOKEN,
+      fetch: fetchMock,
+      retries: 0,
+    })
+    await expect(board.push({})).rejects.toMatchObject({ kind: "protocol" })
+  })
+})

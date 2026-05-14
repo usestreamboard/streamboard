@@ -158,6 +158,30 @@ export interface PushOptions {
   streamboardId?: string
 }
 
+/**
+ * Result of a `Streamboard.pull()`. The `state` field is always an
+ * object (the server returns `{}` when no push has ever happened)
+ * so callers can dereference top-level keys without null checks.
+ * `updatedAt` is null in that no-state-yet case.
+ */
+export interface PullResult<
+  TState extends StreamboardState = StreamboardState,
+> {
+  streamboardId: string
+  /** Latest spec version the state correlates with. */
+  version: number
+  /** Server-side wall-clock at last write, ms since epoch. Null if never pushed. */
+  updatedAt: number | null
+  state: TState
+}
+
+export interface PullOptions {
+  /** Same as `PushOptions.signal`. */
+  signal?: AbortSignal
+  /** Same as `PushOptions.streamboardId`. */
+  streamboardId?: string
+}
+
 // ─── Client ───────────────────────────────────────────────────────
 
 /**
@@ -226,32 +250,87 @@ export class Streamboard<TState extends StreamboardState = StreamboardState> {
       )
     }
 
-    return this.requestWithRetries(url, body, options.signal)
+    const raw = await this.requestWithRetries(
+      url,
+      { method: "POST", body },
+      options.signal,
+    )
+    if (!raw || (raw as PushResult).ok !== true) {
+      throw new StreamboardError("protocol", "Unexpected response body shape")
+    }
+    return raw as PushResult
+  }
+
+  /**
+   * Read the current state envelope from the server. Returns the same
+   * shape the renderer hydrates against `{ $bind: "path" }` slots —
+   * use it from a sibling worker that wants to subscribe to "latest
+   * state" without owning the push path, or from the same worker
+   * that pushes when you need to diff against the previous value.
+   *
+   * The server returns `state: {}` when no push has ever happened;
+   * the SDK keeps that shape so callers can dereference top-level
+   * keys without null checks.
+   */
+  async pull(options: PullOptions = {}): Promise<PullResult<TState>> {
+    const id = options.streamboardId ?? this.streamboardId
+    const url = `${this.baseUrl}/api/data/v1/streamboards/${encodeURIComponent(id)}`
+    const raw = await this.requestWithRetries(
+      url,
+      { method: "GET" },
+      options.signal,
+    )
+    const data = raw as Partial<PullResult<TState>> | null
+    if (
+      !data ||
+      typeof data.streamboardId !== "string" ||
+      typeof data.version !== "number" ||
+      (data.updatedAt !== null && typeof data.updatedAt !== "number") ||
+      !data.state ||
+      typeof data.state !== "object" ||
+      Array.isArray(data.state)
+    ) {
+      // `Array.isArray` guard is belt-and-braces: server upserts
+      // arbitrary JSON into `streamboardState.stateJson`, and the
+      // store could in theory hold a top-level array (it shouldn't,
+      // but the type system can't prevent it). The renderer treats
+      // arrays differently from objects, so reject loudly instead of
+      // passing a structurally-wrong envelope to typed callers.
+      throw new StreamboardError(
+        "protocol",
+        "Unexpected pull() response body shape",
+      )
+    }
+    return data as PullResult<TState>
   }
 
   private async requestWithRetries(
     url: string,
-    body: string,
+    init: { method: "GET" | "POST"; body?: string },
     signal: AbortSignal | undefined,
-  ): Promise<PushResult> {
+  ): Promise<unknown> {
     let lastRetryAfterMs: number | null = null
     let attempt = 0
 
     while (true) {
       attempt++
       if (signal?.aborted) {
-        throw new StreamboardError("aborted", "Push aborted by caller")
+        throw new StreamboardError("aborted", "Request aborted by caller")
+      }
+
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${this.token}`,
+      }
+      if (init.method === "POST") {
+        headers["Content-Type"] = "application/json"
       }
 
       let res: Response
       try {
         res = await this.fetchImpl(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.token}`,
-          },
-          body,
+          method: init.method,
+          headers,
+          body: init.body,
           signal,
         })
       } catch (err) {
@@ -268,14 +347,7 @@ export class Streamboard<TState extends StreamboardState = StreamboardState> {
 
       // Success
       if (res.ok) {
-        const data = (await res.json().catch(() => null)) as PushResult | null
-        if (!data || data.ok !== true) {
-          throw new StreamboardError(
-            "protocol",
-            "Unexpected response body shape",
-            res.status,
-          )
-        }
+        const data = await res.json().catch(() => null)
         return data
       }
 
@@ -366,7 +438,7 @@ function backoffMs(attempt: number, retryAfterMs: number | null): number {
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
-      reject(new StreamboardError("aborted", "Push aborted by caller"))
+      reject(new StreamboardError("aborted", "Request aborted by caller"))
       return
     }
     const t = setTimeout(() => {
@@ -375,7 +447,7 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     }, ms)
     const onAbort = () => {
       clearTimeout(t)
-      reject(new StreamboardError("aborted", "Push aborted by caller"))
+      reject(new StreamboardError("aborted", "Request aborted by caller"))
     }
     signal?.addEventListener("abort", onAbort, { once: true })
   })
