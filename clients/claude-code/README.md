@@ -1,11 +1,11 @@
 # Streamboard Plugin for Claude Code
 
-A Claude Code plugin that connects to the Streamboard MCP server for spaced-repetition flashcard management.
+A Claude Code plugin that connects to the Streamboard MCP server for authoring generative-UI dashboards (KPI tiles, charts, tables) and pushing live data into them.
 
 ## Prerequisites
 
-- A deployed Streamboard MCP server (see `apps/mcp/`)
-- A Streamboard account (email/password)
+- A Streamboard account (email/password or OAuth)
+- The hosted MCP server at `mcp.usestreamboard.com` (no self-host needed)
 
 ## Installation
 
@@ -17,13 +17,20 @@ claude --plugin-dir ./plugins/streamboard
 
 **First-time setup:** Run `/mcp` in Claude Code to authenticate with the Streamboard server via OAuth.
 
-## Skills
+## MCP tools available
 
-| Skill | Description |
+| Tool | Description |
 |---|---|
-| `/streamboard:review [deck-slug]` | Start an interactive review session for due cards |
-| `/streamboard:create-deck <topic>` | Create a new deck and optionally generate cards |
-| `/streamboard:generate-cards <file> [deck-slug]` | Generate flashcards from source files or docs |
-| `/streamboard:study-summary` | Show study progress across all decks |
+| `create_streamboard` | Author a new streamboard from a json-render spec |
+| `update_streamboard` | Append a new version to an existing streamboard |
+| `get_streamboard` | Read spec + metadata (optionally pinned to a version) |
+| `list_versions` | List every version of a streamboard |
+| `delete_streamboard` | Permanent delete (owner / org admin only) |
 
-The `streamboard-context` skill is loaded automatically when you ask about the Leitner system or spaced repetition.
+## Example prompts
+
+- *"Build me a streamboard with four KPI tiles (MRR, active users, churn, NPS) and a weekly-signups area chart. Make the chart data bindable so I can push fresh values."*
+- *"Update streamboard `<id>` to add a 'Top regions' bar chart underneath the existing tiles."*
+- *"Show me version 3 of streamboard `<id>` and explain what changed since v1."*
+
+After authoring, mint a per-board data token at `/app/s/:id/tokens` and wire your worker (via [`@streamboard/sdk`](../sdk/)) or CI script (via `streamboard streamboards push <id>`) to push live values into the bindable slots.
