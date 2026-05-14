@@ -52,6 +52,14 @@ describe("renderCodegen", () => {
     // Push helper imports + uses the generic
     expect(ts).toContain('from "@streamboard/sdk"')
     expect(ts).toContain("new Streamboard<StreamboardState>")
+    expect(ts).toContain("export async function push(")
+    expect(ts).toContain("board.push(state, rest)")
+
+    // Pull helper alongside push — same surface, same auth resolution
+    expect(ts).toContain("export async function pull(")
+    expect(ts).toContain("board.pull(rest)")
+    expect(ts).toContain("type PullResult")
+    expect(ts).toContain("Promise<PullResult<StreamboardState>>")
 
     // Falls back to STREAMBOARD_TOKEN, allows override
     expect(ts).toContain("process.env.STREAMBOARD_TOKEN")
@@ -66,5 +74,38 @@ describe("renderCodegen", () => {
       fields: [],
     })
     expect(ts).toContain("[key: string]: unknown")
+    // pull() must still be generated even when StreamboardState
+    // collapses to the permissive index signature — otherwise a
+    // freshly-minted board (no $bind refs yet) loses the read path
+    // until codegen is re-run after the first bind is added.
+    expect(ts).toContain("export async function pull(")
+    expect(ts).toContain("board.pull(rest)")
+  })
+
+  test("pull() helper and push() helper share the same auth resolution", () => {
+    const ts = renderCodegen({
+      streamboardId: "y",
+      version: 2,
+      baseUrl: "https://preview.usestreamboard.com",
+      fields: [
+        {
+          path: "x",
+          componentType: "KPI",
+          propName: "value",
+          tsType: "string",
+          jsonSchema: { type: "string" },
+        },
+      ],
+    })
+    // Both helpers should reference the same env var fallback so a
+    // caller setting STREAMBOARD_TOKEN once works for both directions.
+    expect(ts.match(/process\.env\.STREAMBOARD_TOKEN/g)?.length).toBe(2)
+    // Both should plumb baseUrl from options OR fall back to the
+    // codegen-baked value (the preview URL above).
+    expect(
+      ts.match(
+        /options\.baseUrl \?\? "https:\/\/preview\.usestreamboard\.com"/g,
+      )?.length,
+    ).toBe(2)
   })
 })

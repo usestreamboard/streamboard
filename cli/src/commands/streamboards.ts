@@ -226,6 +226,8 @@ export function renderCodegen(input: {
 
 import {
   Streamboard,
+  type PullOptions,
+  type PullResult,
   type PushOptions,
   type PushResult,
 } from "@streamboard/sdk"
@@ -255,6 +257,29 @@ export async function push(
   })
   const { token: _token, baseUrl: _baseUrl, ...rest } = options
   return board.push(state, rest)
+}
+
+/**
+ * Read the current typed state envelope. Same auth surface as
+ * \`push()\`. The server returns \`state: {}\` when no push has ever
+ * happened — the StreamboardState type stays optional-friendly so
+ * top-level reads after a fresh mint still typecheck.
+ */
+export async function pull(
+  options: PullOptions & { token?: string; baseUrl?: string } = {},
+): Promise<PullResult<StreamboardState>> {
+  const token = options.token ?? process.env.STREAMBOARD_TOKEN
+  if (!token) {
+    throw new Error(
+      "Missing STREAMBOARD_TOKEN — set it in the environment or pass options.token.",
+    )
+  }
+  const board = new Streamboard<StreamboardState>({
+    token,
+    baseUrl: options.baseUrl ?? ${JSON.stringify(input.baseUrl)},
+  })
+  const { token: _token, baseUrl: _baseUrl, ...rest } = options
+  return board.pull(rest)
 }
 `
 }
@@ -482,7 +507,77 @@ const push = defineCommand({
   },
 })
 
+const pull = defineCommand({
+  meta: {
+    name: "pull",
+    description:
+      "Read the current state envelope from a streamboard (live data).",
+  },
+  args: {
+    id: {
+      type: "positional",
+      description: "Streamboard id (the `<id>` segment in /s/<id>).",
+      required: true,
+    },
+    token: {
+      type: "string",
+      description:
+        "Data token (sb_d_…). Defaults to STREAMBOARD_DATA_TOKEN env var.",
+    },
+    "base-url": {
+      type: "string",
+      description:
+        "API base URL. Defaults to STREAMBOARD_API_URL or https://usestreamboard.com.",
+    },
+    retries: {
+      type: "string",
+      description: "Max retries on 429 / 5xx. Default: 3. Pass 0 to disable.",
+      default: "3",
+    },
+    state: {
+      type: "boolean",
+      description:
+        "Print only the state envelope (omits id/version/updatedAt). Useful in pipes.",
+      default: false,
+    },
+    pretty: {
+      type: "boolean",
+      description: "Human-readable output",
+      default: false,
+    },
+  },
+  async run({ args }) {
+    const token = resolveDataToken(args.token)
+    const baseUrl = resolveDataBaseUrl(args["base-url"])
+
+    const board = new Streamboard({
+      token,
+      baseUrl,
+      streamboardId: args.id,
+      retries: Number(args.retries) || 0,
+    })
+
+    try {
+      const result = await board.pull()
+      output(args.state ? result.state : result, args.pretty)
+    } catch (err) {
+      if (err instanceof StreamboardError) {
+        process.stderr.write(
+          `${JSON.stringify({
+            ok: false,
+            kind: err.kind,
+            status: err.status,
+            error: err.message,
+          })}\n`,
+        )
+        process.exit(1)
+      }
+      throw err
+    }
+  },
+})
+
 export const streamboardsCommand = defineCommand({
   meta: { name: "streamboards", description: "Manage streamboards" },
-  subCommands: { ls, get, create, update, rm, versions, codegen, push },
+  subCommands: { ls, get, create, update, rm, versions, codegen, push, pull },
 })
