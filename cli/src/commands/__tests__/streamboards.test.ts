@@ -5,7 +5,7 @@ describe("renderCodegen", () => {
   test("renders a typed StreamboardState interface + push() helper", () => {
     const ts = renderCodegen({
       streamboardId: "26082684-26a3-4aef-b099-49000d032859",
-      version: 2,
+      version: "2.0.0",
       baseUrl: "https://usestreamboard.com",
       fields: [
         {
@@ -38,7 +38,7 @@ describe("renderCodegen", () => {
     // Mentions source URL + version in the header
     expect(ts).toContain("streamboard streamboards codegen")
     expect(ts).toContain("26082684-26a3-4aef-b099-49000d032859")
-    expect(ts).toContain("Streamboard version: 2")
+    expect(ts).toContain("Streamboard version: 2.0.0")
 
     // Interface body — nested folding
     expect(ts).toContain("export interface StreamboardState")
@@ -69,7 +69,7 @@ describe("renderCodegen", () => {
   test("emits a permissive interface body when no fields are bindable", () => {
     const ts = renderCodegen({
       streamboardId: "x",
-      version: 1,
+      version: "1.0.0",
       baseUrl: "https://usestreamboard.com",
       fields: [],
     })
@@ -85,7 +85,7 @@ describe("renderCodegen", () => {
   test("pull() helper and push() helper share the same auth resolution", () => {
     const ts = renderCodegen({
       streamboardId: "y",
-      version: 2,
+      version: "2.0.0",
       baseUrl: "https://preview.usestreamboard.com",
       fields: [
         {

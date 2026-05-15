@@ -54,7 +54,8 @@ const get = defineCommand({
     id: { type: "positional", description: "Streamboard ID", required: true },
     version: {
       type: "string",
-      description: "Specific version (default: latest)",
+      description:
+        "Specific version: semver 'X.Y.Z' or a legacy integer (default: latest)",
     },
     pretty: {
       type: "boolean",
@@ -67,7 +68,7 @@ const get = defineCommand({
     const data = await rpc(() =>
       client.streamboards.get({
         id: args.id,
-        version: args.version ? Number(args.version) : undefined,
+        version: args.version || undefined,
       }),
     )
     output(data, args.pretty)
@@ -201,7 +202,7 @@ const DATA_TOKEN_PREFIX = "sb_d_"
 
 interface SchemaResponse {
   streamboardId: string
-  version: number
+  version: string
   fields: BindField[]
 }
 
@@ -213,7 +214,7 @@ interface SchemaResponse {
  */
 export function renderCodegen(input: {
   streamboardId: string
-  version: number
+  version: string
   baseUrl: string
   fields: BindField[]
 }): string {
