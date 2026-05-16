@@ -4,7 +4,7 @@ This directory contains the configuration for publishing Streamboard as a ChatGP
 
 ## Architecture
 
-The ChatGPT App uses the same MCP server as the Claude Desktop/Code integrations (`apps/mcp/`), surfacing the streamboard authoring tools (`create_streamboard`, `update_streamboard`, `get_streamboard`, `list_versions`, `delete_streamboard`).
+The ChatGPT App uses the same MCP server as the Claude Desktop/Code integrations (`apps/mcp/`), surfacing the streamboard authoring tools (`create_streamboard`, `update_streamboard`, `get_streamboard`, `get_streamboard_data`, `list_versions`, `delete_streamboard`).
 
 **App Metadata** lives in `app-manifest.json` — name, description, logo, and auth config for the Apps Directory listing.
 
