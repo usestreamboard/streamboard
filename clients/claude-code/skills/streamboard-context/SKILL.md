@@ -33,6 +33,7 @@ The streamboard MCP server at `https://mcp.usestreamboard.com/mcp` exposes the s
 - `create_streamboard` — Create a new streamboard
 - `update_streamboard` — Append a new version
 - `get_streamboard` — Fetch spec by id/version
+- `get_streamboard_data` — Read live pushed state + binding contract (latest spec); catches `$bind` typos/drift before silent default fallback
 - `list_versions` — All versions of a streamboard
 - `delete_streamboard` — Permanently delete
 
