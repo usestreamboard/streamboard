@@ -27,6 +27,7 @@ cp -r integrations/codex/.codex .codex
 | `create_streamboard` | Author a new streamboard from a json-render spec |
 | `update_streamboard` | Append a new version to an existing streamboard |
 | `get_streamboard` | Read spec + metadata (optionally pinned to a version) |
+| `get_streamboard_data` | Read live pushed state + binding contract (latest spec); catches `$bind` typos/drift |
 | `list_versions` | List every version of a streamboard |
 | `delete_streamboard` | Permanent delete (owner / org admin only) |
 

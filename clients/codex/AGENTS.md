@@ -7,6 +7,7 @@ Streamboard is a generative-UI dashboard service. You author dashboards (KPI til
 - `create_streamboard` — Author a new streamboard from a json-render spec. Returns `{id, version, url}`. Params: `title`, `spec`, `isPublic` (optional, default true), `themePreset` (optional shadcn-presets code)
 - `update_streamboard` — Append a new version to an existing streamboard. Atomic version bump — safe under concurrent updates. Params: `id`, `spec`, `themePreset` (optional; omit to inherit, null to clear)
 - `get_streamboard` — Read spec + metadata. Params: `id`, `version` (optional; omits to latest)
+- `get_streamboard_data` — Read live pushed state + the binding contract derived from the latest spec; reconciles each `{ $bind }` path against real data (`present`/`sampleType`) and flags unbound state keys. Params: `id`
 - `list_versions` — List every version of a streamboard, oldest first. Params: `id`
 - `delete_streamboard` — Permanent delete (owner / org admin only). Params: `id`
 
