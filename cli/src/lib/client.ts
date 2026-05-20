@@ -1,6 +1,6 @@
 import { createORPCClient } from "@orpc/client"
 import { RPCLink } from "@orpc/client/fetch"
-import type { AppRouter, RouterClient } from "@streamboard/api/orpc"
+import type { AppRouter, RouterClient } from "@streamboard/api-types"
 
 export type StreamboardClient = RouterClient<AppRouter>
 

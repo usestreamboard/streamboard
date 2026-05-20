@@ -24,13 +24,13 @@
   "dependencies": {
     "@clack/prompts": "^0.10.0",
     "@orpc/client": "^1.13.9",
+    "@streamboard/api-types": "workspace:*",
     "@streamboard/sdk": "workspace:*",
     "@streamboard/streamboards": "workspace:*",
     "citty": "^0.1.6"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.5",
-    "@streamboard/api": "workspace:*",
     "@cloudflare/workers-types": "^4.20260313.1",
     "@types/node": "^22.0.0",
     "tsup": "^8.4.0",
