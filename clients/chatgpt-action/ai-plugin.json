@@ -2,8 +2,8 @@
   "schema_version": "v1",
   "name_for_human": "streamboard",
   "name_for_model": "streamboard",
-  "description_for_human": "Create and review spaced-repetition flashcards using the Leitner box system.",
-  "description_for_model": "You are interacting with the streamboard API, a spaced-repetition flashcard system using the Leitner box system. Users organize flashcards into decks. Each card has a front (question) and back (answer). Cards progress through boxes 1-5 based on review results: passing moves a card to a higher box with longer review intervals, failing moves it back to box 1. Use the review endpoints to fetch due cards and submit pass/fail results. When creating cards, keep fronts as clear questions and backs as concise answers.",
+  "description_for_human": "Generative-UI streamboards. Your LLM writes the spec; you push the data. Every push is a new versioned URL.",
+  "description_for_model": "You are interacting with the streamboard API, a hosted MCP server for authoring and versioning generative-UI streamboards. A streamboard is a json-render spec (KPI tiles, charts, tables) stored against an immutable (id, version) pair and served at a permanent URL. Use create_streamboard to author a new spec, update_streamboard to patch an existing one (each update mints a new version), get_streamboard to read the current spec, and list_versions to walk history. Specs leave `{ $bind: \"path\" }` slots where live values go; users push fresh data into those slots over the data API with a per-streamboard bearer token. Streamboards can be public (shareable URL) or private (org-scoped).",
   "auth": {
     "type": "oauth",
     "client_url": "https://mcp.usestreamboard.com/authorize",

@@ -35,9 +35,9 @@ server into any MCP-aware client:
 claude mcp add streamboard --transport http https://mcp.usestreamboard.com/mcp
 ```
 
-Then ask the model to build a streamboard. Other client configs (Cursor,
-Codex, Claude Desktop, Gemini, ChatGPT) live under
-[`clients/`](./clients).
+Then ask the model to build a streamboard. Other client configs (Claude
+Desktop, plus beta recipes for Cursor, Codex, Gemini, ChatGPT) live
+under [`clients/`](./clients).
 
 ### From the CLI
 
@@ -94,11 +94,15 @@ Drop-in recipes for the major MCP clients:
 
 - [Claude Code](./clients/claude-code) — plugin + skills
 - [Claude Desktop](./clients/claude-desktop)
-- [Cursor](./clients/cursor)
-- [Codex](./clients/codex)
-- [Gemini](./clients/gemini)
-- [ChatGPT (app)](./clients/chatgpt-app)
-- [ChatGPT (action)](./clients/chatgpt-action)
+- [Cursor](./clients/cursor) — **beta**
+- [Codex](./clients/codex) — **beta**
+- [Gemini](./clients/gemini) — **beta**
+- [ChatGPT (app)](./clients/chatgpt-app) — **beta**
+- [ChatGPT (action)](./clients/chatgpt-action) — **beta**
+
+> Beta recipes haven't been end-to-end tested yet. Configs should work
+> but the auth/handshake flow may need tweaks per client version. PRs
+> welcome.
 
 ## Contributing
 
