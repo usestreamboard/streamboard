@@ -1,0 +1,19 @@
+{
+  "name": "streamboard-oss",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "format": "pnpm -r format"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.5",
+    "typescript": "^5.9.3"
+  }
+}

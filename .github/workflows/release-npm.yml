@@ -1,0 +1,51 @@
+name: Release (npm)
+
+on:
+  push:
+    tags:
+      - "cli-v*"
+      - "sdk-js-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine package
+        id: pkg
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "$TAG" == cli-v* ]]; then
+            echo "dir=cli" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == sdk-js-v* ]]; then
+            echo "dir=sdk-js" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unknown tag: $TAG" >&2
+            exit 1
+          fi
+
+      - name: Build
+        run: pnpm --filter "./${{ steps.pkg.outputs.dir }}" build
+
+      - name: Publish
+        working-directory: ${{ steps.pkg.outputs.dir }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --no-git-checks --access public

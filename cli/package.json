@@ -1,7 +1,7 @@
 {
   "name": "streamboard",
   "version": "0.0.3",
-  "description": "Agent-optimized CLI for streamboard spaced-repetition flashcards",
+  "description": "CLI for streamboard — list, codegen, and push live data to streamboards.",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -12,7 +12,7 @@
     "skills"
   ],
   "scripts": {
-    "prebuild": "rm -rf ./skills && cp -r ../claude-code/skills ./skills",
+    "prebuild": "rm -rf ./skills && cp -r ../clients/claude-code/skills ./skills",
     "build": "pnpm prebuild && tsup",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
@@ -24,9 +24,9 @@
   "dependencies": {
     "@clack/prompts": "^0.10.0",
     "@orpc/client": "^1.13.9",
-    "@streamboard/api-types": "workspace:*",
+    "@streamboard/api-types": "^0.1.0",
     "@streamboard/sdk": "workspace:*",
-    "@streamboard/streamboards": "workspace:*",
+    "@streamboard/streamboards": "^0.1.0",
     "citty": "^0.1.6"
   },
   "devDependencies": {

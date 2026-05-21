@@ -101,7 +101,7 @@ The generated file exports both helpers wrapped around this SDK, so importing `p
 ## See also
 
 - [streamboard docs](https://usestreamboard.com)
-- The [streamboard MCP server](https://github.com/cabljac/streamboard) — how the spec is authored
+- The [streamboard MCP server](https://github.com/usestreamboard/streamboard) — how the spec is authored
 
 ## License
 
