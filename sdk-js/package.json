@@ -4,6 +4,15 @@
   "description": "TypeScript client for pushing live data to streamboard from crons, agents, and Workers.",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://usestreamboard.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usestreamboard/streamboard.git",
+    "directory": "sdk-js"
+  },
+  "bugs": {
+    "url": "https://github.com/usestreamboard/streamboard/issues"
+  },
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
