@@ -1,66 +1,112 @@
 # streamboard
 
-> Open-source CLI, SDKs, and MCP client glue for [streamboard](https://usestreamboard.com) — a generative-UI MCP server that lets any MCP-aware LLM persist, version, and share live UI as [json-render](https://www.npmjs.com/package/@json-render/core) specs.
+> Generative-UI streamboards. Your LLM writes the spec. You push the data. Every push is a new versioned URL.
 
-The hosted MCP server is at **`https://mcp.usestreamboard.com/mcp`**. This repo houses the client-side tooling that talks to it: a CLI, two SDKs, and config recipes for popular MCP clients.
+[streamboard](https://usestreamboard.com) is a hosted MCP server for any
+LLM that can call tools. The model authors a structured UI spec — KPI
+tiles, charts, tables, with named slots for live values — and gets back
+a permanent URL. Your own code (cron, agent loop, CI step, Worker) then
+pushes data into those slots over a tiny HTTP API. Old links never
+break.
 
-## What's in here
+This repo holds the **client-side** glue: the CLI, the TypeScript and
+Python SDKs, and config recipes for popular MCP clients. The hosted
+backend lives at [usestreamboard.com](https://usestreamboard.com).
 
-| Path | What | Published as |
-|---|---|---|
-| [`cli/`](./cli) | `streamboard` CLI — list, codegen, push live data | [`streamboard`](https://npmjs.com/package/streamboard) on npm |
-| [`sdk-js/`](./sdk-js) | TypeScript SDK for push/pull from Workers, crons, agents | [`@streamboard/sdk`](https://npmjs.com/package/@streamboard/sdk) on npm |
-| [`sdk-python/`](./sdk-python) | Python SDK | [`streamboard`](https://pypi.org/project/streamboard) on PyPI |
-| [`clients/claude-code/`](./clients/claude-code) | Claude Code plugin + skills | — |
-| [`clients/claude-desktop/`](./clients/claude-desktop) | Claude Desktop MCP config recipe | — |
-| [`clients/cursor/`](./clients/cursor) | Cursor MCP config | — |
-| [`clients/codex/`](./clients/codex) | OpenAI Codex skills + config | — |
-| [`clients/gemini/`](./clients/gemini) | Gemini settings recipe | — |
-| [`clients/chatgpt-app/`](./clients/chatgpt-app) | ChatGPT app manifest | — |
-| [`clients/chatgpt-action/`](./clients/chatgpt-action) | ChatGPT action plugin spec | — |
+---
 
-## Bridge type package
+## What's a streamboard?
 
-The CLI consumes `@streamboard/api-types` at build time for end-to-end type safety against the hosted oRPC API. That package is published to npm from a separate private repo (it's regenerated against the live server schema). In this repo, `cli/package.json` references it as `"@streamboard/api-types": "^0.1.0"` — a placeholder version that resolves **once the package is published to npm**. Until then, `pnpm install` and `cli` typecheck will fail to resolve that dep. That's expected and tracked.
+A streamboard is a `json-render` spec stored against an immutable
+`(id, version)` pair and served at a permanent URL. The spec defines
+shape (which components, where they live, what they're called); the
+data lives separately and is pushed at runtime. Every UI change mints a
+new version — `/d/<id>` always serves the latest, `/d/<id>/<version>`
+pins a frozen one. Free for public streamboards.
 
-## Quickstart
+## Quick start
+
+### From an MCP client (recommended)
+
+Most users let an LLM write the spec for them. Wire the hosted MCP
+server into any MCP-aware client:
 
 ```sh
-# install CLI globally (once published)
+claude mcp add streamboard --transport http https://mcp.usestreamboard.com/mcp
+```
+
+Then ask the model to build a streamboard. Other client configs (Cursor,
+Codex, Claude Desktop, Gemini, ChatGPT) live under
+[`clients/`](./clients).
+
+### From the CLI
+
+```sh
 npm i -g streamboard
 streamboard login
 streamboard streamboards ls
-
-# or use the SDK from a Worker / agent
-pnpm add @streamboard/sdk
 ```
+
+The CLI also handles codegen and live-data push — see
+[`cli/`](./cli) for the full command surface.
+
+### From your code (push data)
+
+TypeScript:
+
+```ts
+import { Streamboard } from "@streamboard/sdk"
+
+const board = new Streamboard({ token: process.env.STREAMBOARD_TOKEN! })
+
+await board.push({
+  kpis: { mrr: { value: "$48.2k", delta: "+4%", trend: "up" } },
+})
+```
+
+Python:
 
 ```python
-# python SDK
-pip install streamboard
+from streamboard import Streamboard
+
+board = Streamboard(token=os.environ["STREAMBOARD_TOKEN"])
+board.push({"kpis": {"mrr": {"value": "$48.2k"}}})
 ```
 
-## Development
+Mint a data token at `/app/s/:id/tokens` once the streamboard exists.
 
-This monorepo uses pnpm workspaces and Turbo. Python lives in `sdk-python/` and is managed with `uv`.
+## Docs
 
-```sh
-pnpm install
-pnpm -r build
-pnpm -r typecheck
-pnpm -r test
-```
+Full docs, MCP tool reference, and the spec catalog:
+[usestreamboard.com/docs](https://usestreamboard.com/docs).
 
-## Releases
+## Packages in this repo
 
-Tags drive npm/PyPI publishing via GitHub Actions:
+| Package            | Install                       | What it does                                      |
+| ------------------ | ----------------------------- | ------------------------------------------------- |
+| `streamboard`      | `npm i -g streamboard`        | CLI — list, codegen, push, manage streamboards    |
+| `@streamboard/sdk` | `npm i @streamboard/sdk`      | TypeScript client for pushing / pulling live data |
+| `streamboard`      | `pip install streamboard`     | Python client (same surface as the TS SDK)        |
 
-- `cli-v*` → `streamboard` on npm
-- `sdk-js-v*` → `@streamboard/sdk` on npm
-- `sdk-python-v*` → `streamboard` on PyPI
+## MCP client configs
 
-Required secrets: `NPM_TOKEN`, `PYPI_TOKEN`.
+Drop-in recipes for the major MCP clients:
+
+- [Claude Code](./clients/claude-code) — plugin + skills
+- [Claude Desktop](./clients/claude-desktop)
+- [Cursor](./clients/cursor)
+- [Codex](./clients/codex)
+- [Gemini](./clients/gemini)
+- [ChatGPT (app)](./clients/chatgpt-app)
+- [ChatGPT (action)](./clients/chatgpt-action)
+
+## Contributing
+
+This repo is a thin client layer over the hosted backend at
+[usestreamboard.com](https://usestreamboard.com). See
+[CONTRIBUTING.md](./CONTRIBUTING.md) for the development setup,
+release flow, and where to file issues.
 
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE).
