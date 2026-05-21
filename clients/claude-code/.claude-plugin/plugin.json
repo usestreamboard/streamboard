@@ -1,0 +1,7 @@
+{
+  "name": "streamboard",
+  "version": "1.0.0",
+  "description": "streamboard spaced-repetition flashcard tools. Connects to the streamboard MCP server for deck management, card creation, and review sessions.",
+  "author": { "name": "streamboard" },
+  "keywords": ["flashcards", "spaced-repetition", "leitner", "streamboard"]
+}
