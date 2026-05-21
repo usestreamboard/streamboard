@@ -1,8 +1,8 @@
 import { createORPCClient } from "@orpc/client"
 import { RPCLink } from "@orpc/client/fetch"
-import type { AppRouter, RouterClient } from "@streamboard/api-types"
+import type { Contract } from "./api-contract"
 
-export type StreamboardClient = RouterClient<AppRouter>
+export type StreamboardClient = Contract
 
 export function createClient(apiUrl: string, token: string): StreamboardClient {
   const link = new RPCLink({

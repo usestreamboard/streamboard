@@ -24,7 +24,6 @@
   "dependencies": {
     "@clack/prompts": "^0.10.0",
     "@orpc/client": "^1.13.9",
-    "@streamboard/api-types": "^0.1.0",
     "@streamboard/sdk": "workspace:*",
     "citty": "^0.1.6"
   },
