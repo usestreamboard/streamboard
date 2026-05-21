@@ -21,7 +21,7 @@ A streamboard is a `json-render` spec stored against an immutable
 `(id, version)` pair and served at a permanent URL. The spec defines
 shape (which components, where they live, what they're called); the
 data lives separately and is pushed at runtime. Every UI change mints a
-new version — `/d/<id>` always serves the latest, `/d/<id>/<version>`
+new version — `/s/<id>` always serves the latest, `/s/<id>/<version>`
 pins a frozen one. Free for public streamboards.
 
 ## Quick start
