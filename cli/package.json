@@ -26,7 +26,6 @@
     "@orpc/client": "^1.13.9",
     "@streamboard/api-types": "^0.1.0",
     "@streamboard/sdk": "workspace:*",
-    "@streamboard/streamboards": "^0.1.0",
     "citty": "^0.1.6"
   },
   "devDependencies": {

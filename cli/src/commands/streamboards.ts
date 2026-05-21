@@ -1,12 +1,9 @@
 import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"
 import { Streamboard, StreamboardError } from "@streamboard/sdk"
-import {
-  type BindField,
-  buildStateInterfaceBody,
-} from "@streamboard/streamboards"
 import { defineCommand } from "citty"
 import { requireClient, rpc } from "../lib/auth"
+import { type BindField, buildStateInterfaceBody } from "../lib/bind-paths"
 import { DEFAULT_API_URL, resolveAuth } from "../lib/config"
 import { output } from "../lib/output"
 import { readStdin } from "../lib/stdin"
