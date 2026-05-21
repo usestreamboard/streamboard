@@ -48,4 +48,8 @@ jobs:
         working-directory: ${{ steps.pkg.outputs.dir }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm publish --no-git-checks --access public
+          # `--provenance` attaches a build attestation tying the tarball
+          # to this workflow run. Requires `permissions.id-token: write`
+          # (declared above) and `NPM_CONFIG_PROVENANCE=true` or the
+          # `--provenance` flag.
+        run: pnpm publish --no-git-checks --access public --provenance

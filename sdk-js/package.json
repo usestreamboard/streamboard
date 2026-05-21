@@ -1,6 +1,6 @@
 {
   "name": "@streamboard/sdk",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "TypeScript client for pushing live data to streamboard from crons, agents, and Workers.",
   "license": "MIT",
   "type": "module",
