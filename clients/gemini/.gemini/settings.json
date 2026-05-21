@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "streamboard": {
+      "httpUrl": "https://mcp.usestreamboard.com/mcp"
+    }
+  }
+}
