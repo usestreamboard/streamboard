@@ -8,6 +8,19 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Trusted Publishing — PyPI verifies this workflow via OIDC, no token
+    # required. Configure the pending publisher at
+    # https://pypi.org/manage/account/publishing/ to bind:
+    #   owner:    usestreamboard
+    #   repo:     streamboard
+    #   workflow: release-pypi.yml
+    #   env:      pypi
+    environment:
+      name: pypi
+      url: https://pypi.org/p/streamboard
+    permissions:
+      id-token: write   # required for OIDC
+      contents: read
     defaults:
       run:
         working-directory: sdk-python
@@ -19,13 +32,12 @@ jobs:
           python-version: "3.11"
 
       - name: Install build tooling
-        run: pip install build twine
+        run: pip install build
 
       - name: Build sdist + wheel
         run: python -m build
 
       - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: twine upload dist/*
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: sdk-python/dist
