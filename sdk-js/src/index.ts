@@ -29,6 +29,7 @@ import { parseToken } from "./parse-token"
 
 export type { ParsedToken } from "./parse-token"
 export { parseToken, TOKEN_PREFIX } from "./parse-token"
+export { buildStateInterfaceBody, generate } from "./codegen"
 
 /** Default base URL for the hosted streamboard API. */
 const DEFAULT_BASE_URL = "https://usestreamboard.com"
@@ -182,6 +183,47 @@ export interface PullOptions {
   streamboardId?: string
 }
 
+/**
+ * One bindable slot in a streamboard's state envelope, as returned by
+ * `GET /api/data/v1/streamboards/<id>/schema`. The server derives this
+ * from the latest spec's `{ $bind: "path" }` refs; `tsType` is the
+ * concrete TypeScript annotation `streamboard-codegen` emits.
+ */
+export interface SchemaField {
+  /** Dotted path inside the state envelope, e.g. `"kpis.mrr.value"`. */
+  path: string
+  /** Component the bind sits on (e.g. `"KPI"`). */
+  componentType: string
+  /** Prop name on that component (e.g. `"value"`). */
+  propName: string
+  /** TypeScript type string for codegen. */
+  tsType: string
+  /** JSON Schema fragment for the value at this path. */
+  jsonSchema: unknown
+}
+
+/**
+ * Result of `Streamboard.schema()` — the state-envelope type contract
+ * the server derives from the latest spec's `$bind` refs. Consumed by
+ * `streamboard-codegen` to emit a typed `StreamboardState` interface.
+ */
+export interface SchemaResult {
+  streamboardId: string
+  /** Spec version the schema was derived from (semver string). */
+  version: string
+  /** Every bindable slot, with its codegen `tsType` + JSON Schema. */
+  fields: SchemaField[]
+  /** Folded JSON Schema document (draft 2020-12) for the whole envelope. */
+  jsonSchema?: unknown
+}
+
+export interface SchemaOptions {
+  /** Same as `PushOptions.signal`. */
+  signal?: AbortSignal
+  /** Same as `PushOptions.streamboardId`. */
+  streamboardId?: string
+}
+
 // ─── Client ───────────────────────────────────────────────────────
 
 /**
@@ -302,6 +344,38 @@ export class Streamboard<TState extends StreamboardState = StreamboardState> {
       )
     }
     return data as PullResult<TState>
+  }
+
+  /**
+   * Fetch the state-envelope type contract for this streamboard — the
+   * `{ streamboardId, version, fields, jsonSchema }` document the
+   * server derives from the latest spec's `{ $bind: "path" }` refs.
+   *
+   * Powers `streamboard-codegen` (which folds `fields[].tsType` into a
+   * nested `StreamboardState` interface) and any runtime validation a
+   * caller wants to do before pushing.
+   */
+  async schema(options: SchemaOptions = {}): Promise<SchemaResult> {
+    const id = options.streamboardId ?? this.streamboardId
+    const url = `${this.baseUrl}/api/data/v1/streamboards/${encodeURIComponent(id)}/schema`
+    const raw = await this.requestWithRetries(
+      url,
+      { method: "GET" },
+      options.signal,
+    )
+    const data = raw as Partial<SchemaResult> | null
+    if (
+      !data ||
+      typeof data.streamboardId !== "string" ||
+      typeof data.version !== "string" ||
+      !Array.isArray(data.fields)
+    ) {
+      throw new StreamboardError(
+        "protocol",
+        "Unexpected schema() response body shape",
+      )
+    }
+    return data as SchemaResult
   }
 
   private async requestWithRetries(

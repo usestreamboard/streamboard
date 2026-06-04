@@ -58,6 +58,10 @@ await board.pull({ signal?: AbortSignal, streamboardId?: string })
 //   → { streamboardId, version, updatedAt, state }
 //   `state` is always an object — `{}` when no push has happened yet.
 //   `updatedAt` is null in that no-state case.
+
+// Type contract (powers codegen)
+await board.schema({ signal?: AbortSignal, streamboardId?: string })
+//   → { streamboardId, version, fields, jsonSchema }
 ```
 
 `TState` is an optional generic that types both directions in lockstep. Use the CLI's [codegen](#typed-state-envelopes) to derive it from the spec's `$bind` refs.
@@ -90,13 +94,37 @@ Every error is an instance of `StreamboardError`. Specific subclasses for branch
 
 ## Typed state envelopes
 
-Run the CLI codegen against any streamboard you have a data token for to generate a typed `StreamboardState` interface plus matching `push()` / `pull()` helpers:
+This package ships its own codegen — no extra install. Point it at any streamboard you hold a data token for to generate a typed `StreamboardState` interface plus matching `push()` / `pull()` helpers:
 
 ```bash
-npx streamboard streamboards codegen <streamboard-id> --out src/streamboard.generated.ts
+# token from the env (STREAMBOARD_TOKEN), write to a file
+STREAMBOARD_TOKEN=sb_d_… npx streamboard-codegen -o src/streamboard.generated.ts
+
+# or pass it explicitly / print to stdout
+npx streamboard-codegen --token sb_d_… --stdout
 ```
 
-The generated file exports both helpers wrapped around this SDK, so importing `pull` / `push` from it gives compile-time checks against the spec's bindable slots.
+```
+streamboard-codegen [options]
+  --token <t>      Data token (sb_d_…). Defaults to env STREAMBOARD_TOKEN.
+  --id <id>        Override the board id parsed from the token.
+  --base-url <u>   API base URL. Default: https://usestreamboard.com
+  -o, --out <f>    Output file. Default: stdout.
+  --stdout         Force output to stdout.
+```
+
+The generated file exports both helpers wrapped around this SDK, so importing `pull` / `push` from it gives compile-time checks against the spec's bindable slots. It also re-exports the typed `StreamboardState` for use with the raw client:
+
+```ts
+import { Streamboard } from "@streamboard/sdk"
+import type { StreamboardState } from "./streamboard.generated"
+
+const board = new Streamboard<StreamboardState>({ token: process.env.STREAMBOARD_TOKEN! })
+```
+
+Prefer to drive it yourself? `board.schema()` returns the raw `{ streamboardId, version, fields, jsonSchema }` contract, and `generate(doc)` (exported from `@streamboard/sdk/codegen`) turns it into the module string.
+
+> The richer [`@streamboard/cli`](https://github.com/usestreamboard/streamboard/tree/main/cli) ships the same codegen as `streamboard streamboards codegen <id>` alongside full board management.
 
 ## See also
 
