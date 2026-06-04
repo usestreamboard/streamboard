@@ -59,35 +59,53 @@ describe("codegen-bin main", () => {
     delete process.env.STREAMBOARD_TOKEN
   })
 
-  test("fetches the schema and prints generated TS to stdout", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY)))
+  test("fetches the schema for the positional board id and prints TS to stdout", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY))
+    vi.stubGlobal("fetch", fetchMock)
 
-    const code = await main(["--token", TOKEN, "--stdout"])
+    const code = await main(["abcdefgh", "--token", TOKEN, "--stdout"])
 
     expect(code).toBe(0)
     expect(stdout).toContain("export interface StreamboardState {")
     expect(stdout).toContain("value: string")
     expect(stdout).toContain('from "@streamboard/sdk"')
+    // schema fetched against the board id, not the token id
+    expect(fetchMock.mock.calls[0][0]).toContain("/streamboards/abcdefgh/schema")
+  })
+
+  test("accepts the board id via --id too", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY)))
+
+    const code = await main(["--id", "abcdefgh", "--token", TOKEN, "--stdout"])
+
+    expect(code).toBe(0)
+    expect(stdout).toContain("export interface StreamboardState {")
   })
 
   test("reads the token from STREAMBOARD_TOKEN when --token is omitted", async () => {
     process.env.STREAMBOARD_TOKEN = TOKEN
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY)))
 
-    const code = await main(["--stdout"])
+    const code = await main(["abcdefgh", "--stdout"])
 
     expect(code).toBe(0)
     expect(stdout).toContain("export interface StreamboardState {")
   })
 
   test("exits 2 with usage when no token is available", async () => {
-    const code = await main([])
+    const code = await main(["abcdefgh"])
     expect(code).toBe(2)
     expect(stderr).toContain("STREAMBOARD_TOKEN is required")
   })
 
+  test("exits 2 when the board id is missing", async () => {
+    const code = await main(["--token", TOKEN])
+    expect(code).toBe(2)
+    expect(stderr).toContain("board id is required")
+  })
+
   test("exits 2 on a malformed token", async () => {
-    const code = await main(["--token", "garbage"])
+    const code = await main(["abcdefgh", "--token", "garbage"])
     expect(code).toBe(2)
     expect(stderr).toContain("error:")
   })

@@ -75,6 +75,12 @@ describe("generate", () => {
     expect(code).toContain("export async function pull(")
   })
 
+  test("bakes the board id into the helpers (token carries token-id, not board-id)", () => {
+    expect(code).toContain('streamboardId: "abcd"')
+    // both push and pull construct a client with the baked id
+    expect(code.match(/streamboardId: "abcd"/g)).toHaveLength(2)
+  })
+
   test("stamps the source id and version in the header", () => {
     expect(code).toContain("streamboard-codegen abcd")
     expect(code).toContain("Streamboard version: 3.0.0")

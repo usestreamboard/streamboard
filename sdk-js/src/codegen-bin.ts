@@ -4,8 +4,12 @@
  * `StreamboardState` module. Mirrors the Python `streamboard-codegen`
  * console script so both SDKs ship codegen in-package.
  *
- *     streamboard-codegen --token sb_d_… -o streamboard.generated.ts
- *     STREAMBOARD_TOKEN=sb_d_… streamboard-codegen --stdout
+ *     streamboard-codegen <board-id> --token sb_d_… -o streamboard.generated.ts
+ *     STREAMBOARD_TOKEN=sb_d_… streamboard-codegen <board-id> --stdout
+ *
+ * The board id is a required argument — the `<id>` segment from
+ * `/s/<id>`. The data token only carries the token's own id, not the
+ * board id, so it can't be derived from the bearer.
  *
  * Zero dependencies: a tiny hand-rolled flag parser, the SDK's own
  * `schema()`, and `node:fs` for the optional file write.
@@ -59,6 +63,9 @@ function parseArgs(argv: string[]): Args {
           else if (flag === "--id") args.id = value
           else if (flag === "--base-url") args.baseUrl = value
           else if (flag === "--out") args.out = value
+        } else if (!arg.startsWith("-") && args.id === undefined) {
+          // First bare argument is the board id (the `<id>` in /s/<id>).
+          args.id = arg
         }
         break
     }
@@ -69,11 +76,16 @@ function parseArgs(argv: string[]): Args {
 const USAGE = `streamboard-codegen — generate a typed StreamboardState module.
 
 Usage:
-  streamboard-codegen --token sb_d_<id>_<secret> [-o FILE]
+  streamboard-codegen <board-id> --token sb_d_<id>_<secret> [-o FILE]
+
+Arguments:
+  <board-id>       The board id — the \`<id>\` segment in /s/<id>. Required.
+                   (The token only carries the token's own id, not the
+                   board id, so it can't be derived from the bearer.)
 
 Options:
   --token <t>      Data token (sb_d_…). Defaults to env STREAMBOARD_TOKEN.
-  --id <id>        Override the board id parsed from the token.
+  --id <id>        Board id, as an alternative to the positional argument.
   --base-url <u>   API base URL. Default: https://usestreamboard.com
   -o, --out <f>    Output file. Default: stdout.
   --stdout         Force output to stdout.
@@ -90,6 +102,15 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   const token = args.token ?? process.env.STREAMBOARD_TOKEN
   if (!token) {
     process.stderr.write("error: --token or STREAMBOARD_TOKEN is required\n\n")
+    process.stderr.write(USAGE)
+    return 2
+  }
+
+  if (!args.id) {
+    process.stderr.write(
+      "error: a board id is required (the <id> in /s/<id>) — pass it as the\n" +
+        "first argument or via --id. It can't be derived from the token.\n\n",
+    )
     process.stderr.write(USAGE)
     return 2
   }
