@@ -75,10 +75,11 @@ describe("generate", () => {
     expect(code).toContain("export async function pull(")
   })
 
-  test("bakes the board id into the helpers (token carries token-id, not board-id)", () => {
-    expect(code).toContain('streamboardId: "abcd"')
-    // both push and pull construct a client with the baked id
-    expect(code.match(/streamboardId: "abcd"/g)).toHaveLength(2)
+  test("generated helpers are token-scoped — no baked board id", () => {
+    // The server resolves the board from the token, so the generated
+    // push/pull construct the client with only token + baseUrl. The id
+    // appears solely as provenance in the header comment, never in code.
+    expect(code).not.toContain("streamboardId:")
   })
 
   test("stamps the source id and version in the header", () => {

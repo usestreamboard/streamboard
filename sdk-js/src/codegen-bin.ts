@@ -4,18 +4,20 @@
  * `StreamboardState` module. Mirrors the Python `streamboard-codegen`
  * console script so both SDKs ship codegen in-package.
  *
- *     streamboard-codegen <board-id> --token sb_d_… -o streamboard.generated.ts
- *     STREAMBOARD_TOKEN=sb_d_… streamboard-codegen <board-id> --stdout
+ *     STREAMBOARD_TOKEN=sb_d_… streamboard-codegen -o streamboard.generated.ts
+ *     streamboard-codegen --token sb_d_… --stdout
  *
- * The board id is a required argument — the `<id>` segment from
- * `/s/<id>`. The data token only carries the token's own id, not the
- * board id, so it can't be derived from the bearer.
+ * Needs only a data token — the server resolves which board the token
+ * targets and the schema response carries that board's id. Pass a board
+ * id (positional or `--id`) only to address one explicitly; it's never
+ * required.
  *
  * Zero dependencies: a tiny hand-rolled flag parser, the SDK's own
  * `schema()`, and `node:fs` for the optional file write.
  */
 
-import { writeFileSync } from "node:fs"
+import { realpathSync, writeFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { generate } from "./codegen"
 import { Streamboard, StreamboardError } from "./index"
 
@@ -76,15 +78,17 @@ function parseArgs(argv: string[]): Args {
 const USAGE = `streamboard-codegen — generate a typed StreamboardState module.
 
 Usage:
-  streamboard-codegen <board-id> --token sb_d_<id>_<secret> [-o FILE]
+  streamboard-codegen [board-id] [--token sb_d_<id>_<secret>] [-o FILE]
 
 Arguments:
-  <board-id>       The board id — the \`<id>\` segment in /s/<id>. Required.
-                   (The token only carries the token's own id, not the
-                   board id, so it can't be derived from the bearer.)
+  [board-id]       Optional board id — the \`<id>\` in /s/<id>. Omit it and
+                   the server resolves the board from the token; pass it
+                   only to target a board explicitly.
 
 Options:
   --token <t>      Data token (sb_d_…). Defaults to env STREAMBOARD_TOKEN.
+                   Prefer the env var — a token on the command line leaks
+                   into shell history and the process list.
   --id <id>        Board id, as an alternative to the positional argument.
   --base-url <u>   API base URL. Default: https://usestreamboard.com
   -o, --out <f>    Output file. Default: stdout.
@@ -102,15 +106,6 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   const token = args.token ?? process.env.STREAMBOARD_TOKEN
   if (!token) {
     process.stderr.write("error: --token or STREAMBOARD_TOKEN is required\n\n")
-    process.stderr.write(USAGE)
-    return 2
-  }
-
-  if (!args.id) {
-    process.stderr.write(
-      "error: a board id is required (the <id> in /s/<id>) — pass it as the\n" +
-        "first argument or via --id. It can't be derived from the token.\n\n",
-    )
     process.stderr.write(USAGE)
     return 2
   }
@@ -147,8 +142,24 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   return 0
 }
 
+/**
+ * True when this module is the process entry point (run directly),
+ * false when imported (e.g. by tests). Resolves symlinks on both sides
+ * so an npm `.bin` shim — which points at this file through a symlink —
+ * still matches. Robust to renames, unlike a filename substring check.
+ */
+function isMainModule(): boolean {
+  const entry = process.argv[1]
+  if (!entry) return false
+  try {
+    return realpathSync(entry) === fileURLToPath(import.meta.url)
+  } catch {
+    return false
+  }
+}
+
 // Run when invoked as a script (not when imported by tests).
-if (process.argv[1]?.includes("codegen-bin")) {
+if (isMainModule()) {
   main().then(
     (code) => process.exit(code),
     (err) => {

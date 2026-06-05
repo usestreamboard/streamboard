@@ -21,9 +21,12 @@ print(snap.version, snap.updated_at, snap.state)
 ```
 
 Auth is a per-streamboard bearer token (`sb_d_<id>_<secret>`) minted at
-`/app/s/:id/tokens`; the SDK derives the board id from it. `push()` is
-last-write-wins — send the full envelope the spec expects. 429 / 5xx /
-network failures retry with jittered backoff honouring `Retry-After`.
+`/app/s/:id/tokens`. Each token belongs to one board, so the server
+resolves the target board from the token — you pass nothing but the
+bearer. (Set `streamboard_id=` only to address a board explicitly.)
+`push()` is last-write-wins — send the full envelope the spec expects.
+429 / 5xx / network failures retry with jittered backoff honouring
+`Retry-After`.
 
 ## Typed state
 

@@ -1,8 +1,11 @@
 """Data-token format primitives.
 
 Tokens are `sb_d_<id>_<secret>`, minted at /app/s/:id/tokens. The `<id>`
-segment lets the SDK derive the target streamboard without the caller
-passing it twice. Mirrors parse-token.ts in @streamboard/sdk.
+segment is the *token's* own lookup key (`streamboardDataToken.id`), NOT
+the board id — the two are independent random strings, so the board id
+can't be derived from the token; callers pass it explicitly as
+``streamboard_id``. This parser only validates shape and splits out the
+secret. Mirrors parse-token.ts in @streamboard/sdk.
 """
 
 from __future__ import annotations

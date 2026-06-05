@@ -141,9 +141,6 @@ export async function push(
   }
   const board = new Streamboard<StreamboardState>({
     token,
-    // Baked from the schema at codegen time — the data token carries the
-    // token's own id, not the board id, so it can't be derived at runtime.
-    streamboardId: ${JSON.stringify(doc.streamboardId)},
     baseUrl: options.baseUrl ?? ${JSON.stringify(baseUrl)},
   })
   const { token: _token, baseUrl: _baseUrl, ...rest } = options
@@ -167,9 +164,6 @@ export async function pull(
   }
   const board = new Streamboard<StreamboardState>({
     token,
-    // Baked from the schema at codegen time — the data token carries the
-    // token's own id, not the board id, so it can't be derived at runtime.
-    streamboardId: ${JSON.stringify(doc.streamboardId)},
     baseUrl: options.baseUrl ?? ${JSON.stringify(baseUrl)},
   })
   const { token: _token, baseUrl: _baseUrl, ...rest } = options

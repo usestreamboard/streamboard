@@ -59,53 +59,58 @@ describe("codegen-bin main", () => {
     delete process.env.STREAMBOARD_TOKEN
   })
 
-  test("fetches the schema for the positional board id and prints TS to stdout", async () => {
+  test("fetches the token-scoped schema and prints TS to stdout (no board id)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY))
+    vi.stubGlobal("fetch", fetchMock)
+
+    const code = await main(["--token", TOKEN, "--stdout"])
+
+    expect(code).toBe(0)
+    expect(stdout).toContain("export interface StreamboardState {")
+    expect(stdout).toContain("value: string")
+    expect(stdout).toContain('from "@streamboard/sdk"')
+    // schema fetched token-scoped — the server resolves the board
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/data/v1/board/schema")
+  })
+
+  test("a positional board id targets /streamboards/:id explicitly", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY))
     vi.stubGlobal("fetch", fetchMock)
 
     const code = await main(["abcdefgh", "--token", TOKEN, "--stdout"])
 
     expect(code).toBe(0)
-    expect(stdout).toContain("export interface StreamboardState {")
-    expect(stdout).toContain("value: string")
-    expect(stdout).toContain('from "@streamboard/sdk"')
-    // schema fetched against the board id, not the token id
     expect(fetchMock.mock.calls[0][0]).toContain("/streamboards/abcdefgh/schema")
   })
 
   test("accepts the board id via --id too", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY)))
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY))
+    vi.stubGlobal("fetch", fetchMock)
 
     const code = await main(["--id", "abcdefgh", "--token", TOKEN, "--stdout"])
 
     expect(code).toBe(0)
-    expect(stdout).toContain("export interface StreamboardState {")
+    expect(fetchMock.mock.calls[0][0]).toContain("/streamboards/abcdefgh/schema")
   })
 
   test("reads the token from STREAMBOARD_TOKEN when --token is omitted", async () => {
     process.env.STREAMBOARD_TOKEN = TOKEN
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY)))
 
-    const code = await main(["abcdefgh", "--stdout"])
+    const code = await main(["--stdout"])
 
     expect(code).toBe(0)
     expect(stdout).toContain("export interface StreamboardState {")
   })
 
   test("exits 2 with usage when no token is available", async () => {
-    const code = await main(["abcdefgh"])
+    const code = await main([])
     expect(code).toBe(2)
     expect(stderr).toContain("STREAMBOARD_TOKEN is required")
   })
 
-  test("exits 2 when the board id is missing", async () => {
-    const code = await main(["--token", TOKEN])
-    expect(code).toBe(2)
-    expect(stderr).toContain("board id is required")
-  })
-
   test("exits 2 on a malformed token", async () => {
-    const code = await main(["abcdefgh", "--token", "garbage"])
+    const code = await main(["--token", "garbage"])
     expect(code).toBe(2)
     expect(stderr).toContain("error:")
   })

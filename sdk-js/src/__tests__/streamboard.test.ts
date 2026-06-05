@@ -9,7 +9,7 @@ import {
 } from "../index"
 
 const TOKEN = "sb_d_abcdefgh_ZZZZZZZZZZZZZZZZ"
-const STREAMBOARD_ID = "abcdefgh"
+const STREAMBOARD_ID = "board-9xy"
 
 function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -20,18 +20,29 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
 }
 
 describe("Streamboard constructor", () => {
-  test("parses the token and exposes streamboardId", () => {
+  test("defaults streamboardId to undefined (board resolved from token)", () => {
     const board = new Streamboard({ token: TOKEN, fetch: vi.fn() })
+    expect(board.streamboardId).toBeUndefined()
+  })
+
+  test("exposes an explicit streamboardId override", () => {
+    const board = new Streamboard({
+      token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
+      fetch: vi.fn(),
+    })
     expect(board.streamboardId).toBe(STREAMBOARD_ID)
   })
 
-  test("`streamboardId` override wins over the token's parsed id", () => {
+  test("the override is independent of the token's own id", () => {
+    // The token id (`abcdefgh`) and the board id are unrelated — when an
+    // id is given the client uses it verbatim, never the token's.
     const board = new Streamboard({
       token: TOKEN,
-      streamboardId: "custom-id",
+      streamboardId: "board-9xy",
       fetch: vi.fn(),
     })
-    expect(board.streamboardId).toBe("custom-id")
+    expect(board.streamboardId).toBe("board-9xy")
   })
 
   test("throws when token is missing", () => {
@@ -47,12 +58,57 @@ describe("Streamboard constructor", () => {
   })
 })
 
+describe("Streamboard — token-scoped default route", () => {
+  test("push without a streamboardId POSTs to /api/data/v1/board", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ ok: true, updatedAt: 1 }))
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    await board.push({ a: 1 })
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe("https://usestreamboard.com/api/data/v1/board")
+    expect(init.method).toBe("POST")
+    expect(init.headers["Authorization"]).toBe(`Bearer ${TOKEN}`)
+  })
+
+  test("pull without a streamboardId GETs /api/data/v1/board", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        streamboardId: STREAMBOARD_ID,
+        version: 1,
+        updatedAt: null,
+        state: {},
+      }),
+    )
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    await board.pull()
+    const [url] = fetchMock.mock.calls[0]
+    expect(url).toBe("https://usestreamboard.com/api/data/v1/board")
+  })
+
+  test("a per-call streamboardId override switches to /streamboards/:id", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ ok: true, updatedAt: 1 }))
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    await board.push({}, { streamboardId: "explicit" })
+    const [url] = fetchMock.mock.calls[0]
+    expect(url).toBe(
+      "https://usestreamboard.com/api/data/v1/streamboards/explicit",
+    )
+  })
+})
+
 describe("Streamboard.push — success", () => {
   test("POSTs JSON to /api/data/v1/streamboards/<id> with bearer header", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(jsonResponse({ ok: true, updatedAt: 1234567890 }))
-    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const board = new Streamboard({
+      token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
+      fetch: fetchMock,
+    })
 
     const result = await board.push({ kpis: { mrr: "$48k" } })
 
@@ -76,6 +132,7 @@ describe("Streamboard.push — success", () => {
       .mockResolvedValue(jsonResponse({ ok: true, updatedAt: 1 }))
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       baseUrl: "http://localhost:5010/",
       fetch: fetchMock,
     })
@@ -90,7 +147,11 @@ describe("Streamboard.push — success", () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(jsonResponse({ ok: true, updatedAt: 1 }))
-    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const board = new Streamboard({
+      token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
+      fetch: fetchMock,
+    })
     await board.push({}, { streamboardId: "other-id" })
     const [url] = fetchMock.mock.calls[0]
     expect(url).toBe(
@@ -108,6 +169,7 @@ describe("Streamboard.push — error mapping", () => {
     )
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -122,6 +184,7 @@ describe("Streamboard.push — error mapping", () => {
     )
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -138,6 +201,7 @@ describe("Streamboard.push — error mapping", () => {
     )
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -156,6 +220,7 @@ describe("Streamboard.push — error mapping", () => {
       )
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -164,7 +229,11 @@ describe("Streamboard.push — error mapping", () => {
 
   test("body over 64KB throws before any HTTP call", async () => {
     const fetchMock = vi.fn()
-    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const board = new Streamboard({
+      token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
+      fetch: fetchMock,
+    })
     const huge = { blob: "x".repeat(80_000) }
     await expect(board.push(huge)).rejects.toBeInstanceOf(
       StreamboardPayloadError,
@@ -190,6 +259,7 @@ describe("Streamboard.push — retries", () => {
     )
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 2,
     })
@@ -207,6 +277,7 @@ describe("Streamboard.push — retries", () => {
       .mockResolvedValueOnce(jsonResponse({ ok: true, updatedAt: 999 }))
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 3,
     })
@@ -222,6 +293,7 @@ describe("Streamboard.push — retries", () => {
       .mockResolvedValue(new Response("", { status: 500 }))
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -235,6 +307,7 @@ describe("Streamboard.push — retries", () => {
       .mockResolvedValue(jsonResponse({ ok: true, updatedAt: 1 }))
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -248,6 +321,7 @@ describe("Streamboard.push — retries", () => {
     const fetchMock = vi.fn()
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -270,7 +344,11 @@ describe("Streamboard.pull — success", () => {
         state: { kpis: { mrr: { value: "$48k" } } },
       }),
     )
-    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const board = new Streamboard({
+      token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
+      fetch: fetchMock,
+    })
 
     const result = await board.pull()
 
@@ -300,7 +378,11 @@ describe("Streamboard.pull — success", () => {
         state: {},
       }),
     )
-    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const board = new Streamboard({
+      token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
+      fetch: fetchMock,
+    })
     const result = await board.pull()
     expect(result.state).toEqual({})
     expect(result.updatedAt).toBeNull()
@@ -315,7 +397,11 @@ describe("Streamboard.pull — success", () => {
         state: {},
       }),
     )
-    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const board = new Streamboard({
+      token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
+      fetch: fetchMock,
+    })
     await board.pull({ streamboardId: "other-id" })
     const [url] = fetchMock.mock.calls[0]
     expect(url).toBe(
@@ -333,6 +419,7 @@ describe("Streamboard.pull — error mapping", () => {
       )
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -347,6 +434,7 @@ describe("Streamboard.pull — error mapping", () => {
       )
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -361,6 +449,7 @@ describe("Streamboard.pull — error mapping", () => {
       )
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -375,6 +464,7 @@ describe("Streamboard.pull — error mapping", () => {
       .mockResolvedValue(jsonResponse({ totally: "wrong" }))
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -385,6 +475,7 @@ describe("Streamboard.pull — error mapping", () => {
     const fetchMock = vi.fn()
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })
@@ -406,6 +497,7 @@ describe("Streamboard.push — protocol guard after refactor", () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ wat: "no ok" }))
     const board = new Streamboard({
       token: TOKEN,
+      streamboardId: STREAMBOARD_ID,
       fetch: fetchMock,
       retries: 0,
     })

@@ -28,19 +28,18 @@ const SCHEMA_BODY = {
 }
 
 describe("Streamboard.schema", () => {
-  test("GETs /schema with the bearer header and returns the doc", async () => {
+  test("GETs the token-scoped /board/schema and returns the doc", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(SCHEMA_BODY))
     const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
 
     const doc = await board.schema()
 
+    // The board id comes back in the response — the caller never sent it.
     expect(doc.streamboardId).toBe(STREAMBOARD_ID)
     expect(doc.version).toBe("2.0.0")
     expect(doc.fields[0].path).toBe("kpis.mrr.value")
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe(
-      `https://usestreamboard.com/api/data/v1/streamboards/${STREAMBOARD_ID}/schema`,
-    )
+    expect(url).toBe("https://usestreamboard.com/api/data/v1/board/schema")
     expect(init.method).toBe("GET")
     expect(init.headers["Authorization"]).toBe(`Bearer ${TOKEN}`)
   })
@@ -64,6 +63,20 @@ describe("Streamboard.schema", () => {
     const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
 
     await expect(board.schema()).rejects.toThrow(StreamboardError)
+    await expect(board.schema()).rejects.toThrow(/Unexpected schema/)
+  })
+
+  test("throws a protocol error when a field is missing its tsType", async () => {
+    // A field without `tsType` would make codegen emit malformed output —
+    // reject it at the boundary instead of generating broken types.
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        ...SCHEMA_BODY,
+        fields: [{ path: "kpis.mrr.value", componentType: "KPI", propName: "value" }],
+      }),
+    )
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+
     await expect(board.schema()).rejects.toThrow(/Unexpected schema/)
   })
 })
