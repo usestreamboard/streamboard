@@ -2,9 +2,11 @@
  * Streamboard data-token format primitives.
  *
  * Tokens are `sb_d_<id>_<secret>` strings minted in the streamboard
- * web app at `/app/s/:id/tokens`. The `<id>` segment is the public
- * lookup key and lets the SDK derive the target streamboardId without
- * the caller specifying it twice.
+ * web app at `/app/s/:id/tokens`. The `<id>` segment is the *token's*
+ * own lookup key (`streamboardDataToken.id`) — NOT the board id. The
+ * two are independent random strings, so the board id can't be derived
+ * from the token; callers pass it explicitly as `streamboardId`. This
+ * parser exists only to validate token shape and split out the secret.
  *
  * Mirrors `parseToken` in `packages/api/src/lib/tokens.ts` on the
  * server side. Kept inline (rather than imported) so the SDK has
@@ -15,7 +17,7 @@
 export const TOKEN_PREFIX = "sb_d"
 
 export interface ParsedToken {
-  /** Public id segment — matches `streamboardDataToken.id`. */
+  /** Token's own id segment — matches `streamboardDataToken.id`, NOT the board id. */
   id: string
   /** Base64url bearer secret — sent verbatim in the Authorization header. */
   secret: string

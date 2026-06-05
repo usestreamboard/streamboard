@@ -5,9 +5,9 @@
  * without paying the cost of re-asking an LLM.
  *
  * Authentication is per-streamboard bearer (`sb_d_<id>_<secret>`),
- * minted in the web app at `/app/s/:id/tokens`. Hand the token to
- * the worker in an env var; the SDK extracts the streamboardId from
- * it so the caller doesn't have to pass the same id twice.
+ * minted in the web app at `/app/s/:id/tokens`. Hand the token to the
+ * worker in an env var — the server resolves which board the token
+ * targets from the token itself, so the caller passes no board id.
  *
  * Zero dependencies. Uses the platform's `fetch` (works on Node 18+,
  * Bun, Deno, Cloudflare Workers). The instance keeps no state
@@ -29,6 +29,7 @@ import { parseToken } from "./parse-token"
 
 export type { ParsedToken } from "./parse-token"
 export { parseToken, TOKEN_PREFIX } from "./parse-token"
+export { buildStateInterfaceBody, generate } from "./codegen"
 
 /** Default base URL for the hosted streamboard API. */
 const DEFAULT_BASE_URL = "https://usestreamboard.com"
@@ -119,10 +120,18 @@ export interface StreamboardOptions {
    */
   baseUrl?: string
   /**
-   * Override the streamboardId derived from the token. Use this
-   * when running a fleet of tokens against multiple boards through
-   * one SDK instance (token-broker pattern). When omitted, the
-   * SDK extracts the id from the `sb_d_<id>_…` token prefix.
+   * Optional board id — the `<id>` segment in `/s/<id>`.
+   *
+   * Usually omit this: the server resolves the board from the token
+   * itself (each `sb_d_*` token belongs to exactly one board), so the
+   * default surface needs nothing but the bearer. Set it only to
+   * address a board explicitly — e.g. a token-broker that swaps one id
+   * per call, or to pin a request to a known id. When set, the SDK
+   * targets `/streamboards/:id`; when omitted, the token-scoped
+   * `/board` route.
+   *
+   * The token's `<id>` segment is the *token's* own id, not the board
+   * id — they're independent, so this can't be parsed from the token.
    */
   streamboardId?: string
   /**
@@ -182,6 +191,47 @@ export interface PullOptions {
   streamboardId?: string
 }
 
+/**
+ * One bindable slot in a streamboard's state envelope, as returned by
+ * `GET /api/data/v1/streamboards/<id>/schema`. The server derives this
+ * from the latest spec's `{ $bind: "path" }` refs; `tsType` is the
+ * concrete TypeScript annotation `streamboard-codegen` emits.
+ */
+export interface SchemaField {
+  /** Dotted path inside the state envelope, e.g. `"kpis.mrr.value"`. */
+  path: string
+  /** Component the bind sits on (e.g. `"KPI"`). */
+  componentType: string
+  /** Prop name on that component (e.g. `"value"`). */
+  propName: string
+  /** TypeScript type string for codegen. */
+  tsType: string
+  /** JSON Schema fragment for the value at this path. */
+  jsonSchema: unknown
+}
+
+/**
+ * Result of `Streamboard.schema()` — the state-envelope type contract
+ * the server derives from the latest spec's `$bind` refs. Consumed by
+ * `streamboard-codegen` to emit a typed `StreamboardState` interface.
+ */
+export interface SchemaResult {
+  streamboardId: string
+  /** Spec version the schema was derived from (semver string). */
+  version: string
+  /** Every bindable slot, with its codegen `tsType` + JSON Schema. */
+  fields: SchemaField[]
+  /** Folded JSON Schema document (draft 2020-12) for the whole envelope. */
+  jsonSchema?: unknown
+}
+
+export interface SchemaOptions {
+  /** Same as `PushOptions.signal`. */
+  signal?: AbortSignal
+  /** Same as `PushOptions.streamboardId`. */
+  streamboardId?: string
+}
+
 // ─── Client ───────────────────────────────────────────────────────
 
 /**
@@ -190,8 +240,12 @@ export interface PullOptions {
  * across concurrent calls. Each `.push()` is a single HTTP POST.
  */
 export class Streamboard<TState extends StreamboardState = StreamboardState> {
-  /** Streamboard id parsed from the token (or overridden). */
-  readonly streamboardId: string
+  /**
+   * Board id override the instance was constructed with, or `undefined`
+   * when the board is resolved server-side from the token. `pull()` and
+   * `schema()` responses also carry the resolved id.
+   */
+  readonly streamboardId: string | undefined
 
   private readonly token: string
   private readonly baseUrl: string
@@ -202,8 +256,11 @@ export class Streamboard<TState extends StreamboardState = StreamboardState> {
     if (!options?.token) {
       throw new StreamboardError("config", "options.token is required")
     }
-    const parsed = parseToken(options.token)
-    if (!parsed) {
+    // Validate token shape (rejects garbage early). We never read an id
+    // out of the token: its `<id>` segment is the token's own lookup
+    // key, not the board id. The server resolves the board from the
+    // token row instead.
+    if (!parseToken(options.token)) {
       throw new StreamboardError(
         "config",
         "Token shape is invalid. Expected `sb_d_<id>_<secret>`.",
@@ -211,7 +268,10 @@ export class Streamboard<TState extends StreamboardState = StreamboardState> {
     }
 
     this.token = options.token
-    this.streamboardId = options.streamboardId ?? parsed.id
+    // Optional: when omitted the server resolves the board from the token
+    // (token-scoped `/board` route). When set, the SDK addresses
+    // `/streamboards/:id` explicitly.
+    this.streamboardId = options.streamboardId
     this.baseUrl = trimTrailingSlash(options.baseUrl ?? DEFAULT_BASE_URL)
     this.fetchImpl =
       options.fetch ?? (typeof fetch !== "undefined" ? fetch : undefined!)
@@ -236,7 +296,7 @@ export class Streamboard<TState extends StreamboardState = StreamboardState> {
    */
   async push(state: TState, options: PushOptions = {}): Promise<PushResult> {
     const id = options.streamboardId ?? this.streamboardId
-    const url = `${this.baseUrl}/api/data/v1/streamboards/${encodeURIComponent(id)}`
+    const url = this.boardUrl(id)
     const body = JSON.stringify({ state })
 
     // Cheap client-side guard against the server's 64KB cap. We
@@ -274,7 +334,7 @@ export class Streamboard<TState extends StreamboardState = StreamboardState> {
    */
   async pull(options: PullOptions = {}): Promise<PullResult<TState>> {
     const id = options.streamboardId ?? this.streamboardId
-    const url = `${this.baseUrl}/api/data/v1/streamboards/${encodeURIComponent(id)}`
+    const url = this.boardUrl(id)
     const raw = await this.requestWithRetries(
       url,
       { method: "GET" },
@@ -302,6 +362,59 @@ export class Streamboard<TState extends StreamboardState = StreamboardState> {
       )
     }
     return data as PullResult<TState>
+  }
+
+  /**
+   * Fetch the state-envelope type contract for this streamboard — the
+   * `{ streamboardId, version, fields, jsonSchema }` document the
+   * server derives from the latest spec's `{ $bind: "path" }` refs.
+   *
+   * Powers `streamboard-codegen` (which folds `fields[].tsType` into a
+   * nested `StreamboardState` interface) and any runtime validation a
+   * caller wants to do before pushing.
+   */
+  async schema(options: SchemaOptions = {}): Promise<SchemaResult> {
+    const id = options.streamboardId ?? this.streamboardId
+    const url = this.boardUrl(id, "/schema")
+    const raw = await this.requestWithRetries(
+      url,
+      { method: "GET" },
+      options.signal,
+    )
+    const data = raw as Partial<SchemaResult> | null
+    if (
+      !data ||
+      typeof data.streamboardId !== "string" ||
+      typeof data.version !== "string" ||
+      !Array.isArray(data.fields) ||
+      // Each field must carry the `path` + `tsType` codegen reads; a
+      // field missing either would silently emit malformed output.
+      !data.fields.every(
+        (f) =>
+          typeof f === "object" &&
+          f !== null &&
+          typeof (f as { path?: unknown }).path === "string" &&
+          typeof (f as { tsType?: unknown }).tsType === "string",
+      )
+    ) {
+      throw new StreamboardError(
+        "protocol",
+        "Unexpected schema() response body shape",
+      )
+    }
+    return data as SchemaResult
+  }
+
+  /**
+   * Build the data-API URL for this board. With an explicit id, targets
+   * `/streamboards/:id`; without, the token-scoped `/board` route, where
+   * the server reads the board off the token row.
+   */
+  private boardUrl(id: string | undefined, suffix = ""): string {
+    const base = `${this.baseUrl}/api/data/v1`
+    return id
+      ? `${base}/streamboards/${encodeURIComponent(id)}${suffix}`
+      : `${base}/board${suffix}`
   }
 
   private async requestWithRetries(

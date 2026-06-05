@@ -93,21 +93,27 @@ class Streamboard:
         self,
         *,
         token: str,
-        base_url: str = DEFAULT_BASE_URL,
         streamboard_id: str | None = None,
+        base_url: str = DEFAULT_BASE_URL,
         retries: int = DEFAULT_MAX_RETRIES,
         client: httpx.Client | None = None,
     ) -> None:
         if not token:
             raise StreamboardError("config", "token is required")
-        parsed = parse_token(token)
-        if parsed is None:
+        # Validate token shape (rejects garbage early). We never read an id
+        # out of the token: its `<id>` segment is the token's own lookup
+        # key, not the board id. The server resolves the board from the
+        # token row instead.
+        if parse_token(token) is None:
             raise StreamboardError(
                 "config",
                 "Token shape is invalid. Expected `sb_d_<id>_<secret>`.",
             )
         self._token = token
-        self.streamboard_id = streamboard_id or parsed.id
+        # Optional: when None the server resolves the board from the token
+        # (token-scoped ``/board`` route). When set, the client addresses
+        # ``/streamboards/:id`` explicitly.
+        self.streamboard_id = streamboard_id
         self._base_url = _trim_slash(base_url)
         self._retries = retries
         self._client = client or httpx.Client(timeout=30.0)
@@ -182,7 +188,12 @@ class Streamboard:
             )
         return raw
 
-    def _url(self, sid: str) -> str:
+    def _url(self, sid: str | None) -> str:
+        # With an explicit id, address ``/streamboards/:id``; without, the
+        # token-scoped ``/board`` route, where the server reads the board
+        # off the token row.
+        if sid is None:
+            return f"{self._base_url}/api/data/v1/board"
         return f"{self._base_url}/api/data/v1/streamboards/{quote(sid, safe='')}"
 
     def _request(self, method: str, url: str, *, body: str | None = None) -> Any:

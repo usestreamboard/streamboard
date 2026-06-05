@@ -55,6 +55,11 @@ describe("renderCodegen", () => {
     expect(ts).toContain("export async function push(")
     expect(ts).toContain("board.push(state, rest)")
 
+    // Token-scoped: generated helpers don't bake a board id; the server
+    // resolves the board from the token. The id appears only as
+    // provenance in the header comment, never in the helper code.
+    expect(ts).not.toContain("streamboardId:")
+
     // Pull helper alongside push — same surface, same auth resolution
     expect(ts).toContain("export async function pull(")
     expect(ts).toContain("board.pull(rest)")

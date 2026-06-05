@@ -16,10 +16,17 @@
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
+  "bin": {
+    "streamboard-codegen": "./dist/codegen-bin.js"
+  },
   "exports": {
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./codegen": {
+      "import": "./src/codegen.ts",
+      "types": "./src/codegen.ts"
     }
   },
   "files": [
@@ -63,6 +70,16 @@
         "require": {
           "types": "./dist/index.d.cts",
           "default": "./dist/index.cjs"
+        }
+      },
+      "./codegen": {
+        "import": {
+          "types": "./dist/codegen.d.ts",
+          "default": "./dist/codegen.js"
+        },
+        "require": {
+          "types": "./dist/codegen.d.cts",
+          "default": "./dist/codegen.cjs"
         }
       }
     }

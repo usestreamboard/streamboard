@@ -9,9 +9,8 @@ pnpm add @streamboard/sdk
 ```ts
 import { Streamboard } from "@streamboard/sdk"
 
-const board = new Streamboard({
-  token: process.env.STREAMBOARD_TOKEN!,
-})
+// The server resolves which board this token targets — no id needed.
+const board = new Streamboard({ token: process.env.STREAMBOARD_TOKEN! })
 
 // Push fresh values into the spec's bindable slots
 await board.push({
@@ -31,20 +30,22 @@ Streamboards are persistent, versioned, generative-UI documents. The structure (
 
 This SDK is the runtime-data half: one HTTP call per refresh, bearer-authenticated, ~1.5 kB gzipped, zero dependencies. Supports both directions:
 
-- `push(state)` — write the envelope (`POST /api/data/v1/streamboards/<id>`)
-- `pull()` — read the current envelope (`GET /api/data/v1/streamboards/<id>`)
+- `push(state)` — write the envelope (`POST /api/data/v1/board`)
+- `pull()` — read the current envelope (`GET /api/data/v1/board`)
 
 ## Auth
 
-Mint a per-streamboard data token in the streamboard web app at `/app/s/:id/tokens`. The token format is `sb_d_<id>_<secret>` — the SDK extracts the target streamboardId from the prefix so you don't have to pass it twice. The same token authorizes both `push` and `pull`.
+Mint a per-streamboard data token in the streamboard web app at `/app/s/:id/tokens`. The token format is `sb_d_<id>_<secret>`. Each token belongs to exactly one board, so the server resolves the target board from the token itself — you pass nothing but the bearer. The same token authorizes `push`, `pull`, and `schema`.
+
+> The token's `<id>` segment is the *token's* own id, not the board id — they're independent, so the board can't be parsed from the token. Set `streamboardId` only to address a board explicitly (e.g. a token-broker swapping one id per call); when set, the SDK targets `/streamboards/:id` instead of the token-scoped `/board` route.
 
 ## API
 
 ```ts
 new Streamboard<TState>({
   token: string,                  // required, sb_d_<id>_<secret>
+  streamboardId?: string,         // optional override; default resolves the board from the token
   baseUrl?: string,               // default: https://usestreamboard.com
-  streamboardId?: string,         // override the id parsed from the token
   fetch?: typeof fetch,           // inject a custom fetch (tests, polyfills)
   retries?: number,               // default: 3 (429 + 5xx, exponential w/ jitter)
 })
@@ -58,6 +59,10 @@ await board.pull({ signal?: AbortSignal, streamboardId?: string })
 //   → { streamboardId, version, updatedAt, state }
 //   `state` is always an object — `{}` when no push has happened yet.
 //   `updatedAt` is null in that no-state case.
+
+// Type contract (powers codegen)
+await board.schema({ signal?: AbortSignal, streamboardId?: string })
+//   → { streamboardId, version, fields, jsonSchema }
 ```
 
 `TState` is an optional generic that types both directions in lockstep. Use the CLI's [codegen](#typed-state-envelopes) to derive it from the spec's `$bind` refs.
@@ -90,13 +95,44 @@ Every error is an instance of `StreamboardError`. Specific subclasses for branch
 
 ## Typed state envelopes
 
-Run the CLI codegen against any streamboard you have a data token for to generate a typed `StreamboardState` interface plus matching `push()` / `pull()` helpers:
+This package ships its own codegen — no extra install. Point it at a board you hold a data token for to generate a typed `StreamboardState` interface plus matching `push()` / `pull()` helpers. Only the token is required — the server resolves the board from it:
 
 ```bash
-npx streamboard streamboards codegen <streamboard-id> --out src/streamboard.generated.ts
+# token from the env (STREAMBOARD_TOKEN), write to a file
+STREAMBOARD_TOKEN=sb_d_… npx streamboard-codegen -o src/streamboard.generated.ts
+
+# or pass the token explicitly / print to stdout
+npx streamboard-codegen --token sb_d_… --stdout
 ```
 
-The generated file exports both helpers wrapped around this SDK, so importing `pull` / `push` from it gives compile-time checks against the spec's bindable slots.
+```
+streamboard-codegen [board-id] [options]
+  [board-id]       Optional board id — the `<id>` in /s/<id>. Omit it and the
+                   server resolves the board from the token; pass it to
+                   target one explicitly.
+  --token <t>      Data token (sb_d_…). Defaults to env STREAMBOARD_TOKEN.
+  --id <id>        Board id, as an alternative to the positional argument.
+  --base-url <u>   API base URL. Default: https://usestreamboard.com
+  -o, --out <f>    Output file. Default: stdout.
+  --stdout         Force output to stdout.
+```
+
+> Prefer `STREAMBOARD_TOKEN` over `--token`: a token passed on the command line leaks into shell history and the process list. Use `--token` only in throwaway/CI contexts where the secret is already scoped.
+
+The generated file exports both helpers wrapped around this SDK, so importing `pull` / `push` from it gives compile-time checks against the spec's bindable slots. It also re-exports the typed `StreamboardState` for use with the raw client:
+
+```ts
+import { Streamboard } from "@streamboard/sdk"
+import type { StreamboardState } from "./streamboard.generated"
+
+const board = new Streamboard<StreamboardState>({
+  token: process.env.STREAMBOARD_TOKEN!,
+})
+```
+
+Prefer to drive it yourself? `board.schema()` returns the raw `{ streamboardId, version, fields, jsonSchema }` contract, and `generate(doc)` (exported from `@streamboard/sdk/codegen`) turns it into the module string.
+
+> The richer [`@streamboard/cli`](https://github.com/usestreamboard/streamboard/tree/main/cli) ships the same codegen as `streamboard streamboards codegen <id>` alongside full board management.
 
 ## See also
 

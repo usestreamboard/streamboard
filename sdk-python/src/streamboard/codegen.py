@@ -106,19 +106,42 @@ def generate(schema_doc: dict[str, Any]) -> str:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="streamboard-codegen")
     p.add_argument(
+        "board_id",
+        nargs="?",
+        default=None,
+        help=(
+            "optional board id — the <id> in /s/<id>. Omit it and the server "
+            "resolves the board from the token; pass it to target one "
+            "explicitly."
+        ),
+    )
+    p.add_argument(
         "--token",
         default=os.environ.get("STREAMBOARD_TOKEN"),
-        help="sb_d_<id>_<secret> (or env STREAMBOARD_TOKEN)",
+        help=(
+            "sb_d_<id>_<secret> (or env STREAMBOARD_TOKEN). Prefer the env "
+            "var — a token on the command line leaks into shell history."
+        ),
     )
-    p.add_argument("--id", dest="sid", default=None, help="override board id")
+    p.add_argument(
+        "--id",
+        dest="id_flag",
+        default=None,
+        help="board id, as an alternative to the positional argument",
+    )
     p.add_argument("--base-url", default="https://usestreamboard.com")
     p.add_argument("-o", "--out", default=None, help="output file (default: stdout)")
     args = p.parse_args(argv)
     if not args.token:
         p.error("--token or STREAMBOARD_TOKEN is required")
 
-    with Streamboard(token=args.token, base_url=args.base_url) as board:
-        doc = board.schema(streamboard_id=args.sid)
+    # Optional override — None means token-scoped (server resolves the board).
+    sid = args.board_id or args.id_flag
+
+    with Streamboard(
+        token=args.token, base_url=args.base_url, streamboard_id=sid
+    ) as board:
+        doc = board.schema()
     code = generate(doc)
 
     if args.out:

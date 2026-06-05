@@ -34,9 +34,27 @@ def test_parse_token() -> None:
     assert parse_token("sb_d_abcd_short") is None  # secret < 16
 
 
-def test_token_id_derived() -> None:
+def test_streamboard_id_defaults_to_none() -> None:
+    # No id passed → resolved server-side from the token (token-scoped route).
     b = _board(lambda r: httpx.Response(200, json={"ok": True}))
-    assert b.streamboard_id == "abcd"
+    assert b.streamboard_id is None
+
+
+def test_explicit_streamboard_id_targets_streamboards_route() -> None:
+    seen: dict = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        seen["url"] = str(req.url)
+        return httpx.Response(200, json={"ok": True, "updatedAt": 1})
+
+    transport = httpx.MockTransport(handler)
+    board = Streamboard(
+        token=TOKEN,
+        streamboard_id="board-xyz",
+        client=httpx.Client(transport=transport),
+    )
+    board.push({})
+    assert seen["url"].endswith("/api/data/v1/streamboards/board-xyz")
 
 
 def test_push_success() -> None:
@@ -51,7 +69,7 @@ def test_push_success() -> None:
     res = _board(handler).push({"kpis": {"mrr": "x"}})
     assert res.ok is True
     assert res.updated_at == 1700000000000
-    assert seen["url"].endswith("/api/data/v1/streamboards/abcd")
+    assert seen["url"].endswith("/api/data/v1/board")
     assert seen["auth"] == f"Bearer {TOKEN}"
     assert seen["body"] == {"state": {"kpis": {"mrr": "x"}}}
 
