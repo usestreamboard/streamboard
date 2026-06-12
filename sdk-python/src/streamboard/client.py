@@ -45,6 +45,13 @@ class PushResult:
     ok: bool
     """Server wall-clock at write, ms since epoch."""
     updated_at: int
+    """Latest spec version the push attached to (semver string), when provided."""
+    version: str | None = None
+    """Advisory reconciliation warnings from the server (missing bound
+    paths, unknown envelope keys). The push succeeded; these surface
+    typos and schema drift at the source. None when the envelope fully
+    covers the spec."""
+    warnings: list[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -149,7 +156,19 @@ class Streamboard:
         raw = self._request("POST", self._url(sid), body=body)
         if not isinstance(raw, dict) or raw.get("ok") is not True:
             raise StreamboardError("protocol", "Unexpected response body shape")
-        return PushResult(ok=True, updated_at=int(raw["updatedAt"]))
+        raw_warnings = raw.get("warnings")
+        warnings = (
+            [str(w) for w in raw_warnings]
+            if isinstance(raw_warnings, list)
+            else None
+        )
+        raw_version = raw.get("version")
+        return PushResult(
+            ok=True,
+            updated_at=int(raw["updatedAt"]),
+            version=str(raw_version) if isinstance(raw_version, str) else None,
+            warnings=warnings,
+        )
 
     def pull(self, *, streamboard_id: str | None = None) -> PullResult:
         """Read the current state envelope.

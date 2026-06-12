@@ -71,6 +71,33 @@ describe("Streamboard — token-scoped default route", () => {
     expect(init.headers["Authorization"]).toBe(`Bearer ${TOKEN}`)
   })
 
+  test("push surfaces server version and reconciliation warnings", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        ok: true,
+        version: "1.2.0",
+        updatedAt: 99,
+        warnings: ["Spec binds 1 path(s) this push did not provide: kpis.mrr"],
+      }),
+    )
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const result = await board.push({ a: 1 })
+    expect(result.version).toBe("1.2.0")
+    expect(result.warnings).toEqual([
+      "Spec binds 1 path(s) this push did not provide: kpis.mrr",
+    ])
+  })
+
+  test("push tolerates responses without version/warnings (older servers)", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ ok: true, updatedAt: 1 }))
+    const board = new Streamboard({ token: TOKEN, fetch: fetchMock })
+    const result = await board.push({ a: 1 })
+    expect(result.warnings).toBeUndefined()
+    expect(result.version).toBeUndefined()
+  })
+
   test("pull without a streamboardId GETs /api/data/v1/board", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({

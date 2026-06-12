@@ -17,7 +17,7 @@ await board.push({
   kpis: { mrr: { value: "$48.2k", delta: "+4%", trend: "up" } },
   runs: { recent: [{ at: "10:02", duration: 240 }] },
 })
-// → { ok: true, updatedAt: 1778670000 }
+// → { ok: true, version: "1.4.0", updatedAt: 1778670000, warnings?: string[] }
 
 // Read the current envelope back (e.g. for diffing, monitoring, secondary workers)
 const snapshot = await board.pull()
@@ -52,7 +52,10 @@ new Streamboard<TState>({
 
 // Write
 await board.push(state, { signal?: AbortSignal, streamboardId?: string })
-//   → { ok: true, updatedAt: number }
+//   → { ok: true, version?: string, updatedAt: number, warnings?: string[] }
+//   `warnings` is advisory reconciliation from the server: bind paths the
+//   spec consumes that the push didn't provide, and envelope keys no bind
+//   path reads (typo / schema drift). The push still succeeded.
 
 // Read
 await board.pull({ signal?: AbortSignal, streamboardId?: string })
