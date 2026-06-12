@@ -149,3 +149,29 @@ def test_rate_limit_exhausts(monkeypatch: pytest.MonkeyPatch) -> None:
                 429, headers={"Retry-After": "1"}, json={"error": "slow"}
             )
         ).push({})
+
+
+def test_push_surfaces_version_and_warnings() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "ok": True,
+                "version": "1.2.0",
+                "updatedAt": 99,
+                "warnings": ["Envelope key(s) no bind path reads: sinups"],
+            },
+        )
+
+    result = _board(handler).push({"sinups": []})
+    assert result.version == "1.2.0"
+    assert result.warnings == ["Envelope key(s) no bind path reads: sinups"]
+
+
+def test_push_tolerates_older_servers_without_version_or_warnings() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"ok": True, "updatedAt": 1})
+
+    result = _board(handler).push({"a": 1})
+    assert result.version is None
+    assert result.warnings is None

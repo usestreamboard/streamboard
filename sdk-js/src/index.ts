@@ -148,8 +148,19 @@ export interface StreamboardOptions {
 
 export interface PushResult {
   ok: true
+  /** Latest spec version the push attached to (semver string). */
+  version?: string
   /** Server-side wall-clock at write, milliseconds since epoch. */
   updatedAt: number
+  /**
+   * Advisory reconciliation warnings from the server: bind paths the
+   * spec consumes that this push did not provide, and envelope keys no
+   * bind path reads (typo / schema drift). The push succeeded — these
+   * exist so workers catch drift at the source instead of users seeing
+   * silently-default slots. Absent when the envelope fully covers the
+   * spec.
+   */
+  warnings?: string[]
 }
 
 export interface PushOptions {
